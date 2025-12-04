@@ -420,7 +420,7 @@ function frequencyToNote(freq) {
   // Convert frequency to approximate MIDI note
   const midi = Math.round(69 + 12 * log2(freq / 440));
   const pc = ((midi % 12) + 12) % 12;
-  const name = getNoteName(midi, true);
+  const name = getNoteName(midi, showOctave);
   const exactFreq = 440 * Math.pow(2, (midi - 69) / 12);
   const cents = 1200 * log2(freq / exactFreq);
   return { midi, name, exactFreq, cents, freq };
@@ -673,7 +673,7 @@ function analysisLoop() {
         const msgApprox = window.t ? window.t("msg_approx") : "(approx)";
         const approx = sf.diff > 0.4 ? ` ${msgApprox}` : "";
         stringFretDisplay.textContent = `${sf.string.name}, fret ${sf.fret}${approx}`;
-        const noteName = getNoteName(sf.string.midi + sf.fret, true); // Always show octave for suggested position as it is specific
+        const noteName = getNoteName(sf.string.midi + sf.fret, showOctave); // Always show octave for suggested position as it is specific
         const msgSuggested = window.t
           ? window.t("msg_suggested_note")
           : "Note at suggested position:";
@@ -691,7 +691,7 @@ function analysisLoop() {
 
       // LOG: If the note is different from the last logged one, show it
       if (lastLoggedNoteMidi !== noteInfo.midi) {
-        logMessage(`${window.t ? window.t("msg_note_detected") : "Note detected"}: ${noteInfo.name}${showOctave ? ' (' + (Math.floor(noteInfo.midi/12)-1) + ')' : ''} (${freq.toFixed(1)} Hz)`);
+        logMessage(`${window.t ? window.t("msg_note_detected") : "Note detected"}: ${noteInfo.name} (${freq.toFixed(1)} Hz)`);
         lastLoggedNoteMidi = noteInfo.midi;
       }
 

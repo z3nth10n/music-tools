@@ -29,6 +29,7 @@ const NOTE_NAMES_LATIN = [
 ];
 
 let currentNotation = "latin";
+let showOctave = false;
 
 function getNoteName(midiOrPc, withOctave = false) {
   const pc = midiOrPc % 12;
@@ -97,7 +98,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const showOctaveCb = document.getElementById("showOctaveCb");
 
   currentNotation = notationSelect.value || "latin";
-  let showOctave = localStorage.getItem("guitar_show_octave") === "true";
+  showOctave = localStorage.getItem("guitar_show_octave") === "true";
   showOctaveCb.checked = showOctave;
 
   function updateChordUI() {
@@ -224,6 +225,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     showOctave = e.target.checked;
     localStorage.setItem("guitar_show_octave", showOctave);
     updateStringNotes();
+    refreshStringTuningOptionLabels();
     const resultEl = document.getElementById("result");
     if (resultEl.textContent) {
       calculateChord();
@@ -248,7 +250,7 @@ function buildStringTuningOptions() {
     for (let m = startMidi; m <= endMidi; m++) {
       const opt = document.createElement("option");
       opt.value = String(m);
-      opt.textContent = getNoteName(m, true);
+      opt.textContent = getNoteName(m, showOctave);
       sel.appendChild(opt);
     }
   });
@@ -259,7 +261,7 @@ function refreshStringTuningOptionLabels() {
   stringTunings.forEach((sel) => {
     Array.from(sel.options).forEach((opt) => {
       const midi = parseInt(opt.value, 10);
-      opt.textContent = getNoteName(midi, true);
+      opt.textContent = getNoteName(midi, showOctave);
     });
   });
 }
@@ -336,7 +338,7 @@ function applySelectedTuning() {
     if (!exists) {
         const opt = document.createElement("option");
         opt.value = String(val);
-        opt.textContent = getNoteName(val, true);
+        opt.textContent = getNoteName(val, showOctave);
         sel.appendChild(opt);
         // Sort options? Maybe not strictly necessary but nice. 
         // For now just append.
