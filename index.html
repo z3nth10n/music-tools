@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="portal_title">Guitar Tools</title>
+  <link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+  <div class="portal-container">
+    <div class="lang-selector">
+      <select id="langSelect">
+        <option value="en">English</option>
+        <option value="es">Español</option>
+      </select>
+    </div>
+
+    <h1 class="main-title" data-i18n="portal_title">Guitar Tools</h1>
+    <p class="main-subtitle" data-i18n="portal_subtitle">Essential utilities for every guitarist</p>
+
+    <div class="tools-grid">
+      <a href="chords.html" class="tool-card">
+        <div class="tool-icon">🎸</div>
+        <h2 class="tool-title" data-i18n="tool_chords_title">Chord Detector</h2>
+        <p class="tool-description" data-i18n="tool_chords_desc">
+          Enter frets manually to identify chords. Supports custom tunings and multiple notations.
+        </p>
+      </a>
+
+      <a href="chord-detector.html" class="tool-card">
+        <div class="tool-icon">🎤</div>
+        <h2 class="tool-title" data-i18n="tool_audio_title">Audio Analyzer</h2>
+        <p class="tool-description" data-i18n="tool_audio_desc">
+          Play your guitar into the microphone to detect notes and chords in real-time.
+        </p>
+      </a>
+    </div>
+  </div>
+
+  <script src="js/langs.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // Set translation prefix for this page
+      if (window.setTranslationPrefix) {
+        window.setTranslationPrefix('index');
+      }
+
+      const langSelect = document.getElementById("langSelect");
+      
+      // Detect browser language
+      const browserLang = navigator.language || navigator.userLanguage || 'en';
+      const userLang = browserLang.startsWith('es') ? 'es' : 'en';
+      
+      if (langSelect) {
+        langSelect.value = userLang;
+        langSelect.addEventListener("change", (e) => {
+          const newLang = e.target.value;
+          if (window.loadTranslations) {
+            window.loadTranslations(newLang);
+          }
+        });
+      }
+
+      // Load initial translations
+      if (window.loadTranslations) {
+        window.loadTranslations(userLang);
+      }
+    });
+  </script>
+</body>
+</html>
