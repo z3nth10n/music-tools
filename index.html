@@ -37,7 +37,7 @@
 
     .app {
       width: 100%;
-      max-width: 680px;
+      max-width: 720px;
       background: linear-gradient(to bottom right, rgba(15,23,42,0.96), rgba(15,23,42,0.98));
       border-radius: 24px;
       padding: 22px 26px 20px;
@@ -62,7 +62,7 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      margin-bottom: 16px;
+      margin-bottom: 10px;
       flex-wrap: wrap;
     }
 
@@ -79,10 +79,26 @@
       padding: 6px 12px;
       font-size: 13px;
       outline: none;
-      min-width: 180px;
+      min-width: 140px;
     }
 
     select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent-soft);
+    }
+
+    input {
+      background: #020617;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      padding: 6px 10px;
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+      width: 100%;
+    }
+
+    input:focus {
       border-color: var(--accent);
       box-shadow: 0 0 0 1px var(--accent-soft);
     }
@@ -122,48 +138,28 @@
       color: var(--muted);
     }
 
-    input {
-      background: #020617;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      padding: 6px 10px;
-      font-size: 13px;
-      color: var(--text);
-      outline: none;
-      width: 100%;
-    }
-
-    input:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px var(--accent-soft);
-    }
-
-    input.string-tuning {
+    .string-tuning {
       text-align: center;
       font-weight: 600;
       background: rgba(15, 23, 42, 0.85);
       border-style: dashed;
       border-color: rgba(148, 163, 184, 0.7);
+      padding-left: 4px;
+      padding-right: 18px;
     }
 
-    .string-tuning-editable {
-      border-style: solid;
-      border-color: var(--accent);
-      background: rgba(34, 197, 94, 0.08);
-    }
-
-    input.fret-input {
-      text-align: center;
-    }
-
-    input.string-note {
+    .string-note {
       text-align: center;
       font-size: 12px;
       background: rgba(15, 23, 42, 0.8);
       border: 1px solid rgba(148, 163, 184, 0.4);
     }
 
-    input.fret-input::placeholder {
+    .fret-input {
+      text-align: center;
+    }
+
+    .fret-input::placeholder {
       color: rgba(148, 163, 184, 0.7);
     }
 
@@ -190,6 +186,25 @@
     #calcButton:active {
       transform: translateY(0.5px);
       filter: brightness(0.97);
+    }
+
+    #saveTuningButton {
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      background: transparent;
+      color: var(--text);
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    #saveTuningButton:hover {
+      background: rgba(148, 163, 184, 0.15);
+    }
+
+    #tuningNameInput {
+      min-width: 140px;
     }
 
     #messages {
@@ -221,47 +236,6 @@
       color: var(--muted);
     }
 
-    #saveChordButton {
-      margin-top: 6px;
-      width: 100%;
-      padding: 8px 12px;
-      border-radius: 999px;
-      border: 1px solid rgba(148, 163, 184, 0.5);
-      background: transparent;
-      color: var(--text);
-      font-size: 13px;
-      cursor: pointer;
-    }
-
-    #saveChordButton:hover {
-      background: rgba(148, 163, 184, 0.15);
-    }
-
-    #savedChords {
-      margin-top: 12px;
-      font-size: 12px;
-    }
-
-    .saved-chord {
-      margin-top: 6px;
-      padding: 6px 8px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      background: rgba(15, 23, 42, 0.8);
-    }
-
-    .saved-chord-title {
-      font-weight: 600;
-      font-size: 13px;
-    }
-
-    .saved-chord-notes,
-    .saved-chord-frets,
-    .saved-chord-info {
-      color: var(--muted);
-      margin-top: 1px;
-    }
-
     @media (max-width: 600px) {
       .app {
         padding: 18px 16px 16px;
@@ -270,7 +244,7 @@
 
       .string-row,
       .strings-header {
-        grid-template-columns: 60px 1fr 1fr;
+        grid-template-columns: 60px 1fr 1fr 70px;
       }
     }
   </style>
@@ -278,19 +252,28 @@
 <body>
   <div class="app">
     <h1>Detector de acordes</h1>
-    <p class="subtitle">Elige afinación, escribe los trastes y te digo qué acorde es.</p>
+    <p class="subtitle">Elige afinación (incluso personalizada), escribe los trastes y te digo qué acorde es.</p>
 
+    <!-- Afinación + notación -->
     <div class="controls">
       <label for="tuningSelect">Afinación:</label>
       <select id="tuningSelect"></select>
 
       <label for="notationSelect">Notación:</label>
       <select id="notationSelect">
-        <option value="latin">Latina (Do, Re, Mi...)</option>
         <option value="anglo">Anglosajona (C, D, E...)</option>
+        <option value="latin">Latina (Do, Re, Mi...)</option>
       </select>
     </div>
 
+    <!-- Nombre + guardar afinación personalizada -->
+    <div class="controls">
+      <label for="tuningNameInput">Nombre afinación:</label>
+      <input id="tuningNameInput" type="text" placeholder="Mi afinación" />
+      <button id="saveTuningButton" type="button">Guardar afinación</button>
+    </div>
+
+    <!-- Cuerdas -->
     <div class="strings-container">
       <div class="strings-header">
         <div>Cuerda</div>
@@ -299,34 +282,10 @@
         <div>Nota</div>
       </div>
 
-      <!-- Cuerda 1 (más aguda) -->
-      <div class="string-row" data-string="1">
-        <div class="string-label">Cuerda 1</div>
-        <input class="string-tuning" type="text" readonly />
-        <input class="fret-input" type="text" placeholder="0, 1, 3, x..." />
-        <input class="string-note" type="text" readonly />
-      </div>
-
-      <!-- Cuerda 2 -->
-      <div class="string-row" data-string="2">
-        <div class="string-label">Cuerda 2</div>
-        <input class="string-tuning" type="text" readonly />
-        <input class="fret-input" type="text" placeholder="0, 1, 3, x..." />
-        <input class="string-note" type="text" readonly />
-      </div>
-
-      <!-- Cuerda 3 -->
-      <div class="string-row" data-string="3">
-        <div class="string-label">Cuerda 3</div>
-        <input class="string-tuning" type="text" readonly />
-        <input class="fret-input" type="text" placeholder="0, 1, 3, x..." />
-        <input class="string-note" type="text" readonly />
-      </div>
-
-      <!-- Cuerda 4 -->
-      <div class="string-row" data-string="4">
-        <div class="string-label">Cuerda 4</div>
-        <input class="string-tuning" type="text" readonly />
+      <!-- Cuerda 6 -->
+      <div class="string-row" data-string="6">
+        <div class="string-label">Cuerda 6</div>
+        <select class="string-tuning"></select>
         <input class="fret-input" type="text" placeholder="0, 1, 3, x..." />
         <input class="string-note" type="text" readonly />
       </div>
@@ -334,22 +293,45 @@
       <!-- Cuerda 5 -->
       <div class="string-row" data-string="5">
         <div class="string-label">Cuerda 5</div>
-        <input class="string-tuning" type="text" readonly />
+        <select class="string-tuning"></select>
         <input class="fret-input" type="text" placeholder="0, 1, 3, x..." />
         <input class="string-note" type="text" readonly />
       </div>
 
-      <!-- Cuerda 6 (más grave) -->
-      <div class="string-row" data-string="6">
-        <div class="string-label">Cuerda 6</div>
-        <input class="string-tuning" type="text" readonly />
+      <!-- Cuerda 4 -->
+      <div class="string-row" data-string="4">
+        <div class="string-label">Cuerda 4</div>
+        <select class="string-tuning"></select>
+        <input class="fret-input" type="text" placeholder="0, 1, 3, x..." />
+        <input class="string-note" type="text" readonly />
+      </div>
+
+      <!-- Cuerda 3 -->
+      <div class="string-row" data-string="3">
+        <div class="string-label">Cuerda 3</div>
+        <select class="string-tuning"></select>
+        <input class="fret-input" type="text" placeholder="0, 1, 3, x..." />
+        <input class="string-note" type="text" readonly />
+      </div>
+
+      <!-- Cuerda 2 -->
+      <div class="string-row" data-string="2">
+        <div class="string-label">Cuerda 2</div>
+        <select class="string-tuning"></select>
+        <input class="fret-input" type="text" placeholder="0, 1, 3, x..." />
+        <input class="string-note" type="text" readonly />
+      </div>
+
+      <!-- Cuerda 1 -->
+      <div class="string-row" data-string="1">
+        <div class="string-label">Cuerda 1</div>
+        <select class="string-tuning"></select>
         <input class="fret-input" type="text" placeholder="0, 1, 3, x..." />
         <input class="string-note" type="text" readonly />
       </div>
     </div>
 
     <button id="calcButton">Calcular acorde</button>
-    <button id="saveChordButton" type="button">Guardar acorde</button>
 
     <div id="messages">
       <div id="errors"></div>
@@ -357,25 +339,22 @@
       <div id="detail"></div>
     </div>
 
-    <div id="savedChords"></div>
-
     <p class="hint">
-      Deja una casilla vacía o escribe <strong>x</strong> si esa cuerda no suena.
-      Usa números de <strong>0 a 24</strong> para los trastes.
+      • Deja la casilla de traste vacía o escribe <strong>x</strong> si esa cuerda no suena.<br />
+      • Usa números de <strong>0 a 24</strong> para los trastes.<br />
+      • En afinación, haz clic en cada cuerda para elegir la nota desde un desplegable.<br />
+      • Escribe un nombre y pulsa <strong>Guardar afinación</strong> para guardarla en las cookies.
     </p>
   </div>
 
   <script>
-    // Nombres de notas (clases de tono)
+    // Notas por semitono (clase de tono)
     const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F",
       "F#", "G", "G#", "A", "A#", "B"];
-
-    // Nombres de notas en notación latina (Do, Re, Mi...)
     const NOTE_NAMES_LATIN = ["Do", "Do#", "Re", "Re#", "Mi", "Fa",
       "Fa#", "Sol", "Sol#", "La", "La#", "Si"];
 
-    // Estado actual de notación (anglosajona o latina)
-    let currentNotation = "latin";
+    let currentNotation = "anglo";
 
     function getNoteName(pc) {
       return currentNotation === "latin"
@@ -383,98 +362,96 @@
         : NOTE_NAMES[pc];
     }
 
-    // Afinaciones: valores = clases de tono de la cuerda 1 a la 6 (aguda a grave)
-    const TUNINGS = {
-      "E estándar":       { notes: [4, 11, 7, 2, 9, 4] }, // E B G D A E
-      "Drop D":           { notes: [4, 11, 7, 2, 9, 2] }, // E B G D A D
-      "D estándar":       { notes: [2, 9, 5, 0, 7, 2] },  // D A F C G D
-      "Drop C":           { notes: [2, 9, 5, 0, 7, 0] },  // D A F C G C
-      "Drop B":           { notes: [1, 8, 4, 11, 6, 11] },// C# G# E B F# B
-      "Drop A":           { notes: [11, 6, 2, 9, 4, 9] }, // B F# D A E A
-      "Personalizada":    { notes: [4, 11, 7, 2, 9, 4] }  // empieza como E estándar
+    // Afinaciones predefinidas: [cuerda6, cuerda5, ..., cuerda1] como clase de tono
+    const builtInTunings = {
+      "E estándar":       [4, 9, 2, 7, 11, 4], // E A D G B E
+      "Drop D":           [2, 9, 2, 7, 11, 4], // D A D G B E
+      "D estándar":       [2, 7, 0, 5, 9, 2],  // D G C F A D
+      "Drop C":           [0, 7, 0, 5, 9, 2],  // C G C F A D
+      "Drop B":           [11, 6, 11, 4, 8, 1],// B F# B E G# C#
+      "Drop A":           [9, 4, 9, 2, 6, 11]  // A E A D F# B
     };
 
-    const customTuningName = "Personalizada";
-    const savedChords = [];
-    let lastChordData = null;
+    // Afinaciones personalizadas (se guardan en cookies)
+    let customTunings = {};
+    const CUSTOM_TUNINGS_COOKIE = "customGuitarTuningsV1";
 
-    // Patrones de acordes (intervalos relativos a la tónica)
-    const CHORD_PATTERNS = [
-      { name: "Mayor",               suffix: "",      intervals: [0, 4, 7] },
-      { name: "Menor",               suffix: "m",     intervals: [0, 3, 7] },
-      { name: "Disminuido",          suffix: "dim",   intervals: [0, 3, 6] },
-      { name: "Aumentado",           suffix: "aug",   intervals: [0, 4, 8] },
-      { name: "Suspendido 2",        suffix: "sus2",  intervals: [0, 2, 7] },
-      { name: "Suspendido 4",        suffix: "sus4",  intervals: [0, 5, 7] },
-      { name: "Mayor 7",             suffix: "maj7",  intervals: [0, 4, 7, 11] },
-      { name: "Menor 7",             suffix: "m7",    intervals: [0, 3, 7, 10] },
-      { name: "Dominante 7",         suffix: "7",     intervals: [0, 4, 7, 10] },
-      { name: "Semidisminuido 7",    suffix: "m7b5",  intervals: [0, 3, 6, 10] },
-      { name: "Disminuido 7",        suffix: "dim7",  intervals: [0, 3, 6, 9] },
-      { name: "Menor mayor 7",       suffix: "mMaj7", intervals: [0, 3, 7, 11] },
-      { name: "Mayor 6",             suffix: "6",     intervals: [0, 4, 7, 9] },
-      { name: "Menor 6",             suffix: "m6",    intervals: [0, 3, 7, 9] }
-    ];
+    function setCookie(name, value, days) {
+      const expires = new Date(Date.now() + days * 864e5).toUTCString();
+      document.cookie = name + "=" + encodeURIComponent(value) +
+        "; expires=" + expires + "; path=/";
+    }
+
+    function getCookie(name) {
+      const parts = document.cookie.split(";").map(p => p.trim());
+      for (const part of parts) {
+        if (part.startsWith(name + "=")) {
+          return decodeURIComponent(part.slice(name.length + 1));
+        }
+      }
+      return null;
+    }
+
+    function loadCustomTuningsFromCookie() {
+      const raw = getCookie(CUSTOM_TUNINGS_COOKIE);
+      if (!raw) return {};
+      try {
+        const obj = JSON.parse(raw);
+        if (obj && typeof obj === "object") return obj;
+      } catch (e) {
+        console.warn("No se pudo parsear la cookie de afinaciones personalizadas", e);
+      }
+      return {};
+    }
+
+    function saveCustomTuningsToCookie() {
+      const json = JSON.stringify(customTunings);
+      setCookie(CUSTOM_TUNINGS_COOKIE, json, 365);
+    }
 
     document.addEventListener("DOMContentLoaded", () => {
-      const tuningSelect   = document.getElementById("tuningSelect");
+      const tuningSelect = document.getElementById("tuningSelect");
       const notationSelect = document.getElementById("notationSelect");
-      const fretInputs     = Array.from(document.querySelectorAll(".fret-input"));
-      const tuningInputs   = Array.from(document.querySelectorAll(".string-tuning"));
+      const fretInputs = Array.from(document.querySelectorAll(".fret-input"));
+      const stringTunings = Array.from(document.querySelectorAll(".string-tuning"));
+      const saveTuningButton = document.getElementById("saveTuningButton");
+      const calcButton = document.getElementById("calcButton");
 
-      // Rellenar el dropdown de afinaciones (incluye "Personalizada")
-      Object.keys(TUNINGS).forEach(name => {
-        const option = document.createElement("option");
-        option.value = name;
-        option.textContent = name;
-        tuningSelect.appendChild(option);
-      });
-
-      // Valor inicial de notación
       currentNotation = notationSelect.value || "anglo";
 
-      // Afinación por defecto
-      tuningSelect.value = "E estándar";
-      applyTuning("E estándar");
-      enableCustomTuningEditing(false);
+      // Rellenar opciones de nota en cada cuerda
+      buildStringTuningOptions();
 
-      // Cambio de afinación
-      tuningSelect.addEventListener("change", (e) => {
-        const value = e.target.value;
-        const isCustom = value === customTuningName;
-        enableCustomTuningEditing(isCustom);
-        applyTuning(value);
-        clearFretInputs();
-        clearMessages();
-        updateStringNotes();
-      });
+      // Cargar afinaciones personalizadas desde cookies
+      customTunings = loadCustomTuningsFromCookie();
 
-      // Cambio de notación (anglosajona / latina)
+      // Rellenar combo de afinaciones
+      populateTuningSelect("builtin::E estándar");
+      applySelectedTuning();
+
+      // Cambio de notación (anglosajona/latina)
       notationSelect.addEventListener("change", (e) => {
         currentNotation = e.target.value;
-        // Reescribir las afinaciones con la notación nueva
-        applyTuning(tuningSelect.value);
-        updateStringNotes(); // para que cambie también Do/Re <-> C/D en la tercera columna
+        // Actualizar nombres de notas en los selects y en la tercera columna
+        refreshStringTuningOptionLabels();
+        updateStringNotes();
+        // Si quieres también actualizar el texto del acorde directamente:
+        // calculateChord();
       });
 
-      // Editar afinación a mano cuando estamos en "Personalizada"
-      tuningInputs.forEach((input, index) => {
-        input.addEventListener("change", () => {
-          if (tuningSelect.value !== customTuningName) return;
+      // Cambio de afinación (del combo principal)
+      tuningSelect.addEventListener("change", () => {
+        applySelectedTuning();
+        clearFretInputs();
+        clearMessages();
+      });
 
-          const pc = parseNoteName(input.value);
-          if (pc === null) {
-            // Si está mal escrita, volvemos a la nota que había
-            input.value = getNoteName(TUNINGS[customTuningName].notes[index]);
-          } else {
-            TUNINGS[customTuningName].notes[index] = pc;
-            input.value = getNoteName(pc); // normaliza a la notación actual
-          }
+      // Cambio manual de afinación cuerda a cuerda
+      stringTunings.forEach(sel => {
+        sel.addEventListener("change", () => {
+          updateStringNotes();
         });
       });
-
-      document.getElementById("calcButton").addEventListener("click", calculateChord);
-      document.getElementById("saveChordButton").addEventListener("click", saveChord);
 
       // Navegación con Enter y Tab entre casillas de traste
       fretInputs.forEach(input => {
@@ -494,62 +471,115 @@
             fretInputs[nextIndex].select();
           }
         });
+
         input.addEventListener("input", () => {
           updateStringNotes();
         });
       });
 
-      renderSavedChords();
+      calcButton.addEventListener("click", calculateChord);
+      saveTuningButton.addEventListener("click", saveCurrentTuning);
+
+      updateStringNotes();
     });
 
-    function enableCustomTuningEditing(isCustom) {
-      const tuningInputs = document.querySelectorAll(".string-tuning");
-      tuningInputs.forEach(input => {
-        input.readOnly = !isCustom;
-        input.classList.toggle("string-tuning-editable", isCustom);
+    // Construye las opciones (C, C#, D...) de cada desplegable de afinación
+    function buildStringTuningOptions() {
+      const stringTunings = document.querySelectorAll(".string-tuning");
+      stringTunings.forEach(sel => {
+        sel.innerHTML = "";
+        for (let pc = 0; pc < 12; pc++) {
+          const opt = document.createElement("option");
+          opt.value = String(pc);
+          opt.textContent = getNoteName(pc);
+          sel.appendChild(opt);
+        }
       });
     }
 
-    function applyTuning(tuningName) {
-      const tuning = TUNINGS[tuningName];
-      const tuningInputs = document.querySelectorAll(".string-tuning");
-      tuningInputs.forEach((input, index) => {
-        const pc = tuning.notes[index];
-        input.value = getNoteName(pc);
+    // Solo cambia los labels (C/Do, etc.) manteniendo el valor
+    function refreshStringTuningOptionLabels() {
+      const stringTunings = document.querySelectorAll(".string-tuning");
+      stringTunings.forEach(sel => {
+        Array.from(sel.options).forEach(opt => {
+          const pc = parseInt(opt.value, 10);
+          opt.textContent = getNoteName(pc);
+        });
       });
     }
 
-    function updateStringNotes() {
-      const tuningName = document.getElementById("tuningSelect").value;
-      const tuning = TUNINGS[tuningName];
-      if (!tuning) return;
+    // Rellena el combo de afinaciones con predefinidas + personalizadas
+    function populateTuningSelect(selectedValue) {
+      const tuningSelect = document.getElementById("tuningSelect");
+      tuningSelect.innerHTML = "";
 
-      const fretInputs = document.querySelectorAll(".fret-input");
-      const noteOutputs = document.querySelectorAll(".string-note");
-
-      fretInputs.forEach((input, index) => {
-        const out = noteOutputs[index];
-        if (!out) return;
-
-        const raw = input.value.trim();
-
-        // Cuerda que no suena
-        if (raw === "" || raw.toLowerCase() === "x") {
-          out.value = "";
-          return;
-        }
-
-        const fret = parseInt(raw, 10);
-        if (Number.isNaN(fret) || fret < 0 || fret > 24) {
-          // Valor inválido → marcamos con raya
-          out.value = "–";
-          return;
-        }
-
-        const openPc = tuning.notes[index];
-        const notePc = (openPc + fret) % 12;
-        out.value = getNoteName(notePc); // respeta anglo/latina
+      const builtGroup = document.createElement("optgroup");
+      builtGroup.label = "Predefinidas";
+      Object.keys(builtInTunings).forEach(name => {
+        const option = document.createElement("option");
+        option.value = "builtin::" + name;
+        option.textContent = name;
+        builtGroup.appendChild(option);
       });
+      tuningSelect.appendChild(builtGroup);
+
+      const customNames = Object.keys(customTunings);
+      if (customNames.length > 0) {
+        const customGroup = document.createElement("optgroup");
+        customGroup.label = "Personalizadas";
+        customNames.forEach(name => {
+          const option = document.createElement("option");
+          option.value = "custom::" + name;
+          option.textContent = name;
+          customGroup.appendChild(option);
+        });
+        tuningSelect.appendChild(customGroup);
+      }
+
+      const options = Array.from(tuningSelect.options);
+      if (
+        selectedValue &&
+        options.some(o => o.value === selectedValue)
+      ) {
+        tuningSelect.value = selectedValue;
+      } else {
+        const defaultValue = "builtin::E estándar";
+        tuningSelect.value = options.some(o => o.value === defaultValue)
+          ? defaultValue
+          : (options[0]?.value || "");
+      }
+    }
+
+    // Aplica la afinación seleccionada a los desplegables de cuerda
+    function applySelectedTuning() {
+      const tuningSelect = document.getElementById("tuningSelect");
+      const value = tuningSelect.value;
+      if (!value) return;
+
+      const [kind, name] = value.split("::");
+      let notes;
+      if (kind === "builtin") {
+        notes = builtInTunings[name];
+      } else {
+        notes = customTunings[name];
+      }
+      if (!notes) return;
+
+      const stringTunings = document.querySelectorAll(".string-tuning");
+      stringTunings.forEach((sel, index) => {
+        sel.value = String(notes[index]);
+      });
+
+      // Si es afinación personalizada, rellenar el nombre para editarla
+      const nameInput = document.getElementById("tuningNameInput");
+      if (kind === "custom") {
+        nameInput.value = name;
+      } else {
+        // Si prefieres que al seleccionar una predefinida no se ponga el nombre:
+        // nameInput.value = "";
+      }
+
+      updateStringNotes();
     }
 
     function clearFretInputs() {
@@ -567,18 +597,46 @@
       document.getElementById("detail").textContent = "";
     }
 
+    // Actualiza la tercera columna (nota resultante) según afinación y traste
+    function updateStringNotes() {
+      const fretInputs = document.querySelectorAll(".fret-input");
+      const noteOutputs = document.querySelectorAll(".string-note");
+      const stringTunings = document.querySelectorAll(".string-tuning");
+
+      fretInputs.forEach((input, index) => {
+        const out = noteOutputs[index];
+        if (!out) return;
+
+        const raw = input.value.trim();
+        if (raw === "" || raw.toLowerCase() === "x") {
+          out.value = "";
+          return;
+        }
+
+        const fret = parseInt(raw, 10);
+        if (Number.isNaN(fret) || fret < 0 || fret > 24) {
+          out.value = "–";
+          return;
+        }
+
+        const openPc = parseInt(stringTunings[index].value, 10);
+        const notePc = (openPc + fret) % 12;
+        out.value = getNoteName(notePc);
+      });
+    }
+
+    // Cálculo del acorde
     function calculateChord() {
       const errorsEl = document.getElementById("errors");
       const resultEl = document.getElementById("result");
       const detailEl = document.getElementById("detail");
-      const fretInputs = document.querySelectorAll(".fret-input");
 
       errorsEl.textContent = "";
       resultEl.textContent = "";
       detailEl.textContent = "";
 
-      const tuningName = document.getElementById("tuningSelect").value;
-      const tuning = TUNINGS[tuningName];
+      const fretInputs = document.querySelectorAll(".fret-input");
+      const stringTunings = document.querySelectorAll(".string-tuning");
 
       const notes = [];
       let hasAnyNote = false;
@@ -588,7 +646,6 @@
         if (hasError) return;
         const raw = input.value.trim();
 
-        // Cuerda que no suena
         if (raw === "" || raw.toLowerCase() === "x") {
           return;
         }
@@ -602,7 +659,7 @@
         }
 
         hasAnyNote = true;
-        const openPc = tuning.notes[index];
+        const openPc = parseInt(stringTunings[index].value, 10);
         const notePc = (openPc + fret) % 12;
         notes.push(notePc);
       });
@@ -618,24 +675,9 @@
         return;
       }
 
-      lastChordData = null; // reseteamos
-
       const chordInfo = detectChord(notes);
       const uniquePcs = Array.from(new Set(notes)).sort((a, b) => a - b);
       const noteNames = uniquePcs.map(pc => getNoteName(pc)).join(" - ");
-
-      // Si el acorde se ha reconocido, guardamos los datos
-      if (chordInfo) {
-        lastChordData = {
-          chordInfo,
-          noteNames,
-          tuningName,
-          tuningNotes: TUNINGS[tuningName] ? [...TUNINGS[tuningName].notes] : null,
-          frets: Array.from(fretInputs).map(input => input.value.trim())
-        };
-      }
-      
-      updateStringNotes();
 
       if (!chordInfo) {
         resultEl.textContent = "Acorde no reconocido";
@@ -652,41 +694,27 @@
         }
         detailEl.textContent = extra;
       }
+
+      updateStringNotes();
     }
 
-    function saveChord() {
-      if (!lastChordData || !lastChordData.chordInfo) {
-        alert("Primero calcula un acorde reconocido para poder guardarlo.");
-        return;
-      }
-      // Clonamos el objeto por seguridad
-      savedChords.push({ ...lastChordData });
-      renderSavedChords();
-    }
-
-    function renderSavedChords() {
-      const container = document.getElementById("savedChords");
-      if (!container) return;
-
-      if (savedChords.length === 0) {
-        container.textContent = "No hay acordes guardados.";
-        return;
-      }
-
-      container.innerHTML = savedChords.map((c, index) => {
-        const fretsText = c.frets.join(" | ");
-        const tuningLabel = c.tuningName +
-          (c.tuningName === customTuningName ? " (personalizada)" : "");
-        return `
-          <div class="saved-chord">
-            <div class="saved-chord-title">${index + 1}. ${c.chordInfo.name}</div>
-            <div class="saved-chord-info">Afinación: ${tuningLabel}</div>
-            <div class="saved-chord-notes">Notas: ${c.noteNames}</div>
-            <div class="saved-chord-frets">Trastes: ${fretsText}</div>
-          </div>
-        `;
-      }).join("");
-    }
+    // Patrones de acordes (intervalos desde la tónica)
+    const CHORD_PATTERNS = [
+      { name: "Mayor",               suffix: "",      intervals: [0, 4, 7] },
+      { name: "Menor",               suffix: "m",     intervals: [0, 3, 7] },
+      { name: "Disminuido",          suffix: "dim",   intervals: [0, 3, 6] },
+      { name: "Aumentado",           suffix: "aug",   intervals: [0, 4, 8] },
+      { name: "Suspendido 2",        suffix: "sus2",  intervals: [0, 2, 7] },
+      { name: "Suspendido 4",        suffix: "sus4",  intervals: [0, 5, 7] },
+      { name: "Mayor 7",             suffix: "maj7",  intervals: [0, 4, 7, 11] },
+      { name: "Menor 7",             suffix: "m7",    intervals: [0, 3, 7, 10] },
+      { name: "Dominante 7",         suffix: "7",     intervals: [0, 4, 7, 10] },
+      { name: "Semidisminuido 7",    suffix: "m7b5",  intervals: [0, 3, 6, 10] },
+      { name: "Disminuido 7",        suffix: "dim7",  intervals: [0, 3, 6, 9] },
+      { name: "Menor mayor 7",       suffix: "mMaj7", intervals: [0, 3, 7, 11] },
+      { name: "Mayor 6",             suffix: "6",     intervals: [0, 4, 7, 9] },
+      { name: "Menor 6",             suffix: "m6",    intervals: [0, 3, 7, 9] }
+    ];
 
     function detectChord(notePcs) {
       const pcs = Array.from(new Set(notePcs));
@@ -720,7 +748,6 @@
             isPowerChord: true
           };
         }
-        // Otro intervalo: lo dejamos sin identificar como acorde claro
         return null;
       }
 
@@ -734,7 +761,7 @@
         CHORD_PATTERNS.forEach(pattern => {
           const isSubset = pattern.intervals.every(i => intervalSet.has(i));
           if (isSubset) {
-            const score = pattern.intervals.length; // preferimos patrones más "completos"
+            const score = pattern.intervals.length;
             if (!bestMatch || score > bestMatch.score) {
               bestMatch = {
                 rootPc,
@@ -754,6 +781,33 @@
         root: rootName,
         quality: bestMatch.pattern.name
       };
+    }
+
+    // Guarda la afinación actual (según los desplegables de cuerda) con el nombre indicado
+    function saveCurrentTuning() {
+      const nameInput = document.getElementById("tuningNameInput");
+      const name = nameInput.value.trim();
+      if (!name) {
+        alert("Escribe un nombre para la afinación personalizada.");
+        return;
+      }
+
+      const stringTunings = document.querySelectorAll(".string-tuning");
+      if (stringTunings.length !== 6) {
+        alert("No se ha podido leer la afinación de las cuerdas.");
+        return;
+      }
+
+      const notes = Array.from(stringTunings).map(sel => parseInt(sel.value, 10));
+
+      // Crear o actualizar la afinación personalizada
+      customTunings[name] = notes;
+      saveCustomTuningsToCookie();
+
+      // Seleccionar esta afinación en el combo
+      const selectedValue = "custom::" + name;
+      populateTuningSelect(selectedValue);
+      applySelectedTuning();
     }
   </script>
 </body>
