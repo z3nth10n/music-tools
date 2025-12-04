@@ -343,7 +343,7 @@
       • Deja la casilla de traste vacía o escribe <strong>x</strong> si esa cuerda no suena.<br />
       • Usa números de <strong>0 a 24</strong> para los trastes.<br />
       • En afinación, haz clic en cada cuerda para elegir la nota desde un desplegable.<br />
-      • Escribe un nombre y pulsa <strong>Guardar afinación</strong> para guardarla en las cookies.
+      • Escribe un nombre y pulsa <strong>Guardar afinación</strong> para guardarla en el navegador.
     </p>
   </div>
 
@@ -372,41 +372,25 @@
       "Drop A":           [9, 4, 9, 2, 6, 11]  // A E A D F# B
     };
 
-    // Afinaciones personalizadas (se guardan en cookies)
+    // Afinaciones personalizadas (se guardan en localStorage)
     let customTunings = {};
-    const CUSTOM_TUNINGS_COOKIE = "customGuitarTuningsV1";
+    const CUSTOM_TUNINGS_KEY = "customGuitarTuningsV1";
 
-    function setCookie(name, value, days) {
-      const expires = new Date(Date.now() + days * 864e5).toUTCString();
-      document.cookie = name + "=" + encodeURIComponent(value) +
-        "; expires=" + expires + "; path=/";
-    }
-
-    function getCookie(name) {
-      const parts = document.cookie.split(";").map(p => p.trim());
-      for (const part of parts) {
-        if (part.startsWith(name + "=")) {
-          return decodeURIComponent(part.slice(name.length + 1));
-        }
-      }
-      return null;
-    }
-
-    function loadCustomTuningsFromCookie() {
-      const raw = getCookie(CUSTOM_TUNINGS_COOKIE);
+    function loadCustomTunings() {
+      const raw = localStorage.getItem(CUSTOM_TUNINGS_KEY);
       if (!raw) return {};
       try {
         const obj = JSON.parse(raw);
         if (obj && typeof obj === "object") return obj;
       } catch (e) {
-        console.warn("No se pudo parsear la cookie de afinaciones personalizadas", e);
+        console.warn("No se pudo parsear las afinaciones personalizadas", e);
       }
       return {};
     }
 
-    function saveCustomTuningsToCookie() {
+    function saveCustomTunings() {
       const json = JSON.stringify(customTunings);
-      setCookie(CUSTOM_TUNINGS_COOKIE, json, 365);
+      localStorage.setItem(CUSTOM_TUNINGS_KEY, json);
     }
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -422,8 +406,8 @@
       // Rellenar opciones de nota en cada cuerda
       buildStringTuningOptions();
 
-      // Cargar afinaciones personalizadas desde cookies
-      customTunings = loadCustomTuningsFromCookie();
+      // Cargar afinaciones personalizadas desde localStorage
+      customTunings = loadCustomTunings();
 
       // Rellenar combo de afinaciones
       populateTuningSelect("builtin::E estándar");
@@ -802,7 +786,7 @@
 
       // Crear o actualizar la afinación personalizada
       customTunings[name] = notes;
-      saveCustomTuningsToCookie();
+      saveCustomTunings();
 
       // Seleccionar esta afinación en el combo
       const selectedValue = "custom::" + name;
