@@ -51,7 +51,10 @@
 
     <div class="panel">
       <div class="result-chord">
-        <div class="result-chord-label" data-i18n="label_chord_detected">Detected Chord</div>
+        <div class="result-chord-label">
+          <span data-i18n="label_chord_detected">Detected Chord</span>
+          <span id="chordFreqDisplay" style="font-weight: normal; color: var(--accent); margin-left: 10px; font-size: 0.9em; opacity: 0.8;"></span>
+        </div>
         <div id="chordDisplay" class="result-chord-value"></div>
         <div id="chordNotes" class="result-chord-notes" data-i18n="msg_play_chord">Play multiple strings to try to detect a chord.</div>
       </div>

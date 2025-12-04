@@ -50,6 +50,7 @@
     const statusDot = document.getElementById("statusDot");
     const statusText = document.getElementById("statusText");
     const chordDisplay = document.getElementById("chordDisplay");
+    const chordFreqDisplay = document.getElementById("chordFreqDisplay");
     const chordNotes = document.getElementById("chordNotes");
     const noteDisplay = document.getElementById("noteDisplay");
     const noteDetail = document.getElementById("noteDetail");
@@ -274,6 +275,10 @@
           const msgDeviation = window.t ? window.t("msg_deviation") : "Hz · deviation";
           const msgCents = window.t ? window.t("msg_cents") : "cents";
           noteDetail.textContent = `${freq.toFixed(1)} ${msgDeviation} ${centsStr} ${msgCents}`;
+          
+          if (chordFreqDisplay) {
+             chordFreqDisplay.textContent = `(${freq.toFixed(1)} Hz)`;
+          }
 
           const sf = guessStringAndFret(noteInfo.midi);
           if (sf) {
@@ -289,6 +294,7 @@
           }
         } else {
           updateUIForSilence();
+          if (chordFreqDisplay) chordFreqDisplay.textContent = "";
         }
 
         // Chord detection (very basic)
