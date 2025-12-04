@@ -254,7 +254,7 @@
     <h1>Detector de acordes</h1>
     <p class="subtitle">Elige afinación (incluso personalizada), escribe los trastes y te digo qué acorde es.</p>
 
-    <!-- Afinación + notación -->
+    <!-- Tuning + notation -->
     <div class="controls">
       <label for="tuningSelect">Afinación:</label>
       <select id="tuningSelect"></select>
@@ -266,14 +266,14 @@
       </select>
     </div>
 
-    <!-- Nombre + guardar afinación personalizada -->
+    <!-- Name + save custom tuning -->
     <div class="controls">
       <label for="tuningNameInput">Nombre afinación:</label>
       <input id="tuningNameInput" type="text" placeholder="Mi afinación" />
       <button id="saveTuningButton" type="button">Guardar afinación</button>
     </div>
 
-    <!-- Cuerdas -->
+    <!-- Strings -->
     <div class="strings-container">
       <div class="strings-header">
         <div>Cuerda</div>
@@ -282,7 +282,7 @@
         <div>Nota</div>
       </div>
 
-      <!-- Cuerda 6 -->
+      <!-- String 6 -->
       <div class="string-row" data-string="6">
         <div class="string-label">Cuerda 6</div>
         <select class="string-tuning"></select>
@@ -290,7 +290,7 @@
         <input class="string-note" type="text" readonly />
       </div>
 
-      <!-- Cuerda 5 -->
+      <!-- String 5 -->
       <div class="string-row" data-string="5">
         <div class="string-label">Cuerda 5</div>
         <select class="string-tuning"></select>
@@ -298,7 +298,7 @@
         <input class="string-note" type="text" readonly />
       </div>
 
-      <!-- Cuerda 4 -->
+      <!-- String 4 -->
       <div class="string-row" data-string="4">
         <div class="string-label">Cuerda 4</div>
         <select class="string-tuning"></select>
@@ -306,7 +306,7 @@
         <input class="string-note" type="text" readonly />
       </div>
 
-      <!-- Cuerda 3 -->
+      <!-- String 3 -->
       <div class="string-row" data-string="3">
         <div class="string-label">Cuerda 3</div>
         <select class="string-tuning"></select>
@@ -314,7 +314,7 @@
         <input class="string-note" type="text" readonly />
       </div>
 
-      <!-- Cuerda 2 -->
+      <!-- String 2 -->
       <div class="string-row" data-string="2">
         <div class="string-label">Cuerda 2</div>
         <select class="string-tuning"></select>
@@ -322,7 +322,7 @@
         <input class="string-note" type="text" readonly />
       </div>
 
-      <!-- Cuerda 1 -->
+      <!-- String 1 -->
       <div class="string-row" data-string="1">
         <div class="string-label">Cuerda 1</div>
         <select class="string-tuning"></select>
@@ -348,7 +348,7 @@
   </div>
 
   <script>
-    // Notas por semitono (clase de tono)
+    // Notes by semitone (pitch class)
     const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F",
       "F#", "G", "G#", "A", "A#", "B"];
     const NOTE_NAMES_LATIN = ["Do", "Do#", "Re", "Re#", "Mi", "Fa",
@@ -362,7 +362,7 @@
         : NOTE_NAMES[pc];
     }
 
-    // Afinaciones predefinidas: [cuerda6, cuerda5, ..., cuerda1] como clase de tono
+    // Built-in tunings: [string6, string5, ..., string1] as pitch class
     const builtInTunings = {
       "E estándar":       [4, 9, 2, 7, 11, 4], // E A D G B E
       "Drop D":           [2, 9, 2, 7, 11, 4], // D A D G B E
@@ -372,7 +372,7 @@
       "Drop A":           [9, 4, 9, 2, 6, 11]  // A E A D F# B
     };
 
-    // Afinaciones personalizadas (se guardan en localStorage)
+    // Custom tunings (saved in localStorage)
     let customTunings = {};
     const CUSTOM_TUNINGS_KEY = "customGuitarTuningsV1";
 
@@ -403,41 +403,41 @@
 
       currentNotation = notationSelect.value || "anglo";
 
-      // Rellenar opciones de nota en cada cuerda
+      // Fill note options for each string
       buildStringTuningOptions();
 
-      // Cargar afinaciones personalizadas desde localStorage
+      // Load custom tunings from localStorage
       customTunings = loadCustomTunings();
 
-      // Rellenar combo de afinaciones
+      // Fill tuning dropdown
       populateTuningSelect("builtin::E estándar");
       applySelectedTuning();
 
-      // Cambio de notación (anglosajona/latina)
+      // Notation change (Anglo/Latin)
       notationSelect.addEventListener("change", (e) => {
         currentNotation = e.target.value;
-        // Actualizar nombres de notas en los selects y en la tercera columna
+        // Update note names in selects and third column
         refreshStringTuningOptionLabels();
         updateStringNotes();
-        // Si quieres también actualizar el texto del acorde directamente:
+        // If you also want to update the chord text directly:
         // calculateChord();
       });
 
-      // Cambio de afinación (del combo principal)
+      // Tuning change (from main dropdown)
       tuningSelect.addEventListener("change", () => {
         applySelectedTuning();
         clearFretInputs();
         clearMessages();
       });
 
-      // Cambio manual de afinación cuerda a cuerda
+      // Manual tuning change string by string
       stringTunings.forEach(sel => {
         sel.addEventListener("change", () => {
           updateStringNotes();
         });
       });
 
-      // Navegación con Enter y Tab entre casillas de traste
+      // Navigation with Enter and Tab between fret inputs
       fretInputs.forEach(input => {
         input.addEventListener("keydown", (ev) => {
           if (ev.key === "Enter") {
@@ -467,7 +467,7 @@
       updateStringNotes();
     });
 
-    // Construye las opciones (C, C#, D...) de cada desplegable de afinación
+    // Builds options (C, C#, D...) for each tuning dropdown
     function buildStringTuningOptions() {
       const stringTunings = document.querySelectorAll(".string-tuning");
       stringTunings.forEach(sel => {
@@ -481,7 +481,7 @@
       });
     }
 
-    // Solo cambia los labels (C/Do, etc.) manteniendo el valor
+    // Only changes labels (C/Do, etc.) keeping the value
     function refreshStringTuningOptionLabels() {
       const stringTunings = document.querySelectorAll(".string-tuning");
       stringTunings.forEach(sel => {
@@ -492,7 +492,7 @@
       });
     }
 
-    // Rellena el combo de afinaciones con predefinidas + personalizadas
+    // Fills tuning dropdown with built-in + custom
     function populateTuningSelect(selectedValue) {
       const tuningSelect = document.getElementById("tuningSelect");
       tuningSelect.innerHTML = "";
@@ -534,7 +534,7 @@
       }
     }
 
-    // Aplica la afinación seleccionada a los desplegables de cuerda
+    // Applies selected tuning to string dropdowns
     function applySelectedTuning() {
       const tuningSelect = document.getElementById("tuningSelect");
       const value = tuningSelect.value;
@@ -554,12 +554,12 @@
         sel.value = String(notes[index]);
       });
 
-      // Si es afinación personalizada, rellenar el nombre para editarla
+      // If custom tuning, fill name to edit it
       const nameInput = document.getElementById("tuningNameInput");
       if (kind === "custom") {
         nameInput.value = name;
       } else {
-        // Si prefieres que al seleccionar una predefinida no se ponga el nombre:
+        // If you prefer not to set the name when selecting a built-in one:
         // nameInput.value = "";
       }
 
@@ -581,7 +581,7 @@
       document.getElementById("detail").textContent = "";
     }
 
-    // Actualiza la tercera columna (nota resultante) según afinación y traste
+    // Updates third column (resulting note) based on tuning and fret
     function updateStringNotes() {
       const fretInputs = document.querySelectorAll(".fret-input");
       const noteOutputs = document.querySelectorAll(".string-note");
@@ -609,7 +609,7 @@
       });
     }
 
-    // Cálculo del acorde
+    // Chord calculation
     function calculateChord() {
       const errorsEl = document.getElementById("errors");
       const resultEl = document.getElementById("result");
@@ -682,7 +682,7 @@
       updateStringNotes();
     }
 
-    // Patrones de acordes (intervalos desde la tónica)
+    // Chord patterns (intervals from root)
     const CHORD_PATTERNS = [
       { name: "Mayor",               suffix: "",      intervals: [0, 4, 7] },
       { name: "Menor",               suffix: "m",     intervals: [0, 3, 7] },
@@ -706,7 +706,7 @@
 
       pcs.sort((a, b) => a - b);
 
-      // Una sola nota
+      // Single note
       if (pcs.length === 1) {
         const rootName = getNoteName(pcs[0]);
         return {
@@ -716,7 +716,7 @@
         };
       }
 
-      // Dos notas: intentar detectar power chord (quinta)
+      // Two notes: try to detect power chord (fifth)
       if (pcs.length === 2) {
         const [a, b] = pcs;
         const intervalAB = (b - a + 12) % 12;
@@ -735,7 +735,7 @@
         return null;
       }
 
-      // Tres o más notas: probar todas como posible tónica
+      // Three or more notes: try all as possible root
       let bestMatch = null;
 
       pcs.forEach(rootPc => {
@@ -767,7 +767,7 @@
       };
     }
 
-    // Guarda la afinación actual (según los desplegables de cuerda) con el nombre indicado
+    // Saves current tuning (based on string dropdowns) with the given name
     function saveCurrentTuning() {
       const nameInput = document.getElementById("tuningNameInput");
       const name = nameInput.value.trim();
@@ -784,11 +784,11 @@
 
       const notes = Array.from(stringTunings).map(sel => parseInt(sel.value, 10));
 
-      // Crear o actualizar la afinación personalizada
+      // Create or update custom tuning
       customTunings[name] = notes;
       saveCustomTunings();
 
-      // Seleccionar esta afinación en el combo
+      // Select this tuning in the dropdown
       const selectedValue = "custom::" + name;
       populateTuningSelect(selectedValue);
       applySelectedTuning();
