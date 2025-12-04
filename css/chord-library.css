@@ -88,6 +88,7 @@
 }
 
 .chord-display-container {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -96,6 +97,18 @@
   padding: 2rem;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.hands-icon {
+  position: absolute;
+  top: 1.5rem;
+  left: 1.5rem;
+  width: 100px;
+  height: auto;
+  opacity: 0.8;
+  background-color: lightgray;
+  border-radius: 12px;
+  padding: 4px; 
 }
 
 .chord-header {
