@@ -500,9 +500,9 @@ function drawChord(chord) {
 function getFingerColor(finger) {
   switch (finger) {
     case 1: return '#f1c40f'; // Yellow
-    case 2: return '#9b59b6'; // Purple
-    case 3: return '#3498db'; // Blue
-    case 4: return '#e67e22'; // Orange
+    case 2: return '#6B48FA'; // Purple
+    case 3: return '#4790F7'; // Blue
+    case 4: return '#EF6177'; // Orange
     default: return '#000';
   }
 }
