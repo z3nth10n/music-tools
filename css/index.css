@@ -1,34 +1,3 @@
-:root {
-  --bg: #020617;
-  --bg-alt: #0f172a;
-  --card-bg: #020617;
-  --accent: #22c55e;
-  --accent-soft: rgba(34, 197, 94, 0.25);
-  --border: #1f2933;
-  --text: #e5e7eb;
-  --muted: #9ca3af;
-  --hover-bg: rgba(30, 41, 59, 0.5);
-}
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color: var(--text);
-  background:
-    radial-gradient(circle at top left, #1d4ed8 0, transparent 55%),
-    radial-gradient(circle at bottom right, #22c55e 0, transparent 55%),
-    var(--bg);
-}
-
 .portal-container {
   width: 100%;
   max-width: 800px;

@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title data-i18n="app_title">Guitar Chord and Note Detector</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="css/shared.css">
   <link rel="stylesheet" href="css/chord-detector.css">
 </head>
 
@@ -88,10 +89,10 @@
             </label>
 
             <div style="display:flex; gap:8px; margin-top:4px;">
-              <button type="button" id="saveDetectionSettingsBtn" style="font-size:12px; padding:4px 10px;">
+              <button type="button" id="saveDetectionSettingsBtn" class="btn-action">
                 Guardar ajustes
               </button>
-              <button type="button" id="resetDetectionSettingsBtn" style="font-size:12px; padding:4px 10px;">
+              <button type="button" id="resetDetectionSettingsBtn" class="btn-action">
                 Reset a valores por defecto
               </button>
             </div>
@@ -134,21 +135,11 @@
               <input type="checkbox" id="enableLogsCheckbox" checked />
               Activar logs
             </label>
-            <button type="button" id="clearLogsBtn" style="font-size:12px; padding:2px 8px;">
+            <button type="button" id="clearLogsBtn" class="btn-action">
               Limpiar
             </button>
           </div>
-          <pre id="logOutput"
-               class="log-output"
-               style="
-                 max-height: 200px;
-                 overflow: auto;
-                 background: rgba(0,0,0,0.04);
-                 padding: 8px;
-                 border-radius: 4px;
-                 font-size: 11px;
-                 white-space: pre-wrap;
-               "></pre>
+          <pre id="logOutput" class="log-output"></pre>
         </div>
       </details>
 

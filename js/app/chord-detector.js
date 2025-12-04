@@ -208,14 +208,14 @@ function logMessage(message) {
   const line = `[${stamp}] ${message}`;
 
   if (logOutputEl.textContent && logOutputEl.textContent.length > 0) {
-    logOutputEl.textContent += "\n" + line;
+    logOutputEl.textContent = line + "\n" + logOutputEl.textContent;
   } else {
     logOutputEl.textContent = line;
   }
 
   const lines = logOutputEl.textContent.split("\n");
   if (lines.length > LOG_MAX_LINES) {
-    logOutputEl.textContent = lines.slice(lines.length - LOG_MAX_LINES).join("\n");
+    logOutputEl.textContent = lines.slice(0, LOG_MAX_LINES).join("\n");
   }
 }
 
