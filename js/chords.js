@@ -69,6 +69,15 @@
       const userLang = 'en';
       langSelect.value = userLang;
 
+      // Sync notation with default language
+      if (userLang === 'en') {
+        notationSelect.value = 'anglo';
+        currentNotation = 'anglo';
+      } else if (userLang === 'es') {
+        notationSelect.value = 'latin';
+        currentNotation = 'latin';
+      }
+
       buildStringTuningOptions();
       customTunings = loadCustomTunings();
       populateTuningSelect("builtin::tuning_e_std");
@@ -80,8 +89,19 @@
       }
 
       langSelect.addEventListener("change", (e) => {
+        const newLang = e.target.value;
+
+        // Auto-switch notation based on language
+        if (newLang === 'en') {
+            notationSelect.value = 'anglo';
+            currentNotation = 'anglo';
+        } else if (newLang === 'es') {
+            notationSelect.value = 'latin';
+            currentNotation = 'latin';
+        }
+
         if (window.loadTranslations) {
-            window.loadTranslations(e.target.value, updateChordUI);
+            window.loadTranslations(newLang, updateChordUI);
         }
       });
 
