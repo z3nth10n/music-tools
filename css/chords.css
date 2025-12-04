@@ -14,6 +14,32 @@
       box-sizing: border-box;
     }
 
+    .back-button {
+      position: fixed;
+      top: 24px;
+      left: 24px;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border);
+      color: var(--text);
+      text-decoration: none;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(4px);
+      z-index: 100;
+    }
+
+    .back-button:hover {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      transform: translateX(-2px);
+      color: var(--accent);
+    }
+
     body {
       margin: 0;
       min-height: 100vh;
