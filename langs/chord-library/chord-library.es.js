@@ -7,6 +7,7 @@ window.translations_es = {
   notation_latin: "Latina (Do, Re, Mi...)",
   notation_anglo: "Anglo (C, D, E...)",
   label_language: "Idioma:",
+  label_show_octave: "Mostrar Octava",
   btn_back: "Volver",
   label_root: "Tónica",
   label_type: "Tipo",

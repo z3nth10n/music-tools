@@ -6,6 +6,7 @@ window.translations_en = {
   label_tuning: "Tuning:",
   label_notation: "Notation:",
   label_language: "Language:",
+  label_show_octave: "Show Octave",
   notation_latin: "Latin (Do, Re, Mi...)",
   notation_anglo: "Anglo (C, D, E...)",
   label_tuning_name: "Tuning Name:",

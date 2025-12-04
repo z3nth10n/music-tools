@@ -30,18 +30,34 @@ const NOTE_NAMES_LATIN = [
 
 let currentNotation = "latin";
 
-function getNoteName(pc) {
-  return currentNotation === "latin" ? NOTE_NAMES_LATIN[pc] : NOTE_NAMES[pc];
+function getNoteName(midiOrPc, withOctave = false) {
+  const pc = midiOrPc % 12;
+  const name = currentNotation === "latin" ? NOTE_NAMES_LATIN[pc] : NOTE_NAMES[pc];
+  if (withOctave && midiOrPc >= 12) {
+    const octave = Math.floor(midiOrPc / 12) - 1;
+    return name + octave;
+  }
+  return name;
 }
 
-// Built-in tunings
+// Standard MIDI for strings 1 to 6 (E4, B3, G3, D3, A2, E2)
+const STANDARD_TUNING_MIDI = [64, 59, 55, 50, 45, 40];
+
+function getClosestMidi(pc, targetMidi) {
+  let diff = pc - (targetMidi % 12);
+  if (diff > 6) diff -= 12;
+  if (diff < -6) diff += 12;
+  return targetMidi + diff;
+}
+
+// Built-in tunings (MIDI numbers)
 const builtInTunings = {
-  tuning_e_std: [4, 11, 7, 2, 9, 4],
-  tuning_drop_d: [4, 11, 7, 2, 9, 2],
-  tuning_d_std: [2, 9, 5, 0, 7, 2],
-  tuning_drop_c: [2, 9, 5, 0, 7, 0],
-  tuning_drop_b: [1, 8, 4, 11, 6, 11],
-  tuning_drop_a: [11, 6, 2, 9, 4, 9],
+  tuning_e_std: [64, 59, 55, 50, 45, 40], // E4, B3, G3, D3, A2, E2
+  tuning_drop_d: [64, 59, 55, 50, 45, 38], // E4, B3, G3, D3, A2, D2
+  tuning_d_std: [62, 57, 53, 48, 43, 38], // D4, A3, F3, C3, G2, D2
+  tuning_drop_c: [62, 57, 53, 48, 43, 36], // D4, A3, F3, C3, G2, C2
+  tuning_drop_b: [61, 56, 52, 47, 42, 35], // C#4, G#3, E3, B2, F#2, B1
+  tuning_drop_a: [59, 54, 50, 45, 40, 33], // B3, F#3, D3, A2, E2, A1
 };
 
 // Custom tunings
@@ -78,8 +94,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   const saveTuningButton = document.getElementById("saveTuningButton");
   const calcButton = document.getElementById("calcButton");
   const langSelect = document.getElementById("langSelect");
+  const showOctaveCb = document.getElementById("showOctaveCb");
 
   currentNotation = notationSelect.value || "latin";
+  let showOctave = localStorage.getItem("guitar_show_octave") === "true";
+  showOctaveCb.checked = showOctave;
 
   function updateChordUI() {
     refreshStringTuningOptionLabels();
@@ -201,6 +220,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
+  showOctaveCb.addEventListener("change", (e) => {
+    showOctave = e.target.checked;
+    localStorage.setItem("guitar_show_octave", showOctave);
+    updateStringNotes();
+    const resultEl = document.getElementById("result");
+    if (resultEl.textContent) {
+      calculateChord();
+    }
+  });
+
   calcButton.addEventListener("click", calculateChord);
   saveTuningButton.addEventListener("click", saveCurrentTuning);
 
@@ -209,12 +238,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 function buildStringTuningOptions() {
   const stringTunings = document.querySelectorAll(".string-tuning");
-  stringTunings.forEach((sel) => {
+  stringTunings.forEach((sel, index) => {
     sel.innerHTML = "";
-    for (let pc = 0; pc < 12; pc++) {
+    const refMidi = STANDARD_TUNING_MIDI[index];
+    // Range: +/- 12 semitones from standard
+    const startMidi = refMidi - 12;
+    const endMidi = refMidi + 12;
+
+    for (let m = startMidi; m <= endMidi; m++) {
       const opt = document.createElement("option");
-      opt.value = String(pc);
-      opt.textContent = getNoteName(pc);
+      opt.value = String(m);
+      opt.textContent = getNoteName(m, true);
       sel.appendChild(opt);
     }
   });
@@ -224,8 +258,8 @@ function refreshStringTuningOptionLabels() {
   const stringTunings = document.querySelectorAll(".string-tuning");
   stringTunings.forEach((sel) => {
     Array.from(sel.options).forEach((opt) => {
-      const pc = parseInt(opt.value, 10);
-      opt.textContent = getNoteName(pc);
+      const midi = parseInt(opt.value, 10);
+      opt.textContent = getNoteName(midi, true);
     });
   });
 }
@@ -284,7 +318,31 @@ function applySelectedTuning() {
 
   const stringTunings = document.querySelectorAll(".string-tuning");
   stringTunings.forEach((sel, index) => {
-    sel.value = String(notes[index]);
+    let val = notes[index];
+    // Handle legacy custom tunings (Pitch Classes 0-11)
+    if (val < 12) {
+       val = getClosestMidi(val, STANDARD_TUNING_MIDI[index]);
+    }
+    
+    // Check if option exists, if not add it (for extreme tunings)
+    let exists = false;
+    for (let i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === String(val)) {
+            exists = true;
+            break;
+        }
+    }
+    
+    if (!exists) {
+        const opt = document.createElement("option");
+        opt.value = String(val);
+        opt.textContent = getNoteName(val, true);
+        sel.appendChild(opt);
+        // Sort options? Maybe not strictly necessary but nice. 
+        // For now just append.
+    }
+
+    sel.value = String(val);
   });
 
   const nameInput = document.getElementById("tuningNameInput");
@@ -330,9 +388,10 @@ function updateStringNotes() {
       return;
     }
 
-    const openPc = parseInt(stringTunings[index].value, 10);
-    const notePc = (openPc + fret) % 12;
-    out.value = getNoteName(notePc);
+    const openMidi = parseInt(stringTunings[index].value, 10);
+    const noteMidi = openMidi + fret;
+    
+    out.value = getNoteName(noteMidi, showOctave);
   });
 }
 
@@ -348,7 +407,7 @@ function calculateChord() {
   const fretInputs = document.querySelectorAll(".fret-input");
   const stringTunings = document.querySelectorAll(".string-tuning");
 
-  const notes = [];
+  const notesMidi = [];
   let hasAnyNote = false;
   let hasError = false;
 
@@ -368,9 +427,10 @@ function calculateChord() {
     }
 
     hasAnyNote = true;
-    const openPc = parseInt(stringTunings[index].value, 10);
-    const notePc = (openPc + fret) % 12;
-    notes.push(notePc);
+    const openMidi = parseInt(stringTunings[index].value, 10);
+    const noteMidi = openMidi + fret;
+    
+    notesMidi.push(noteMidi);
   });
 
   if (hasError) {
@@ -383,15 +443,36 @@ function calculateChord() {
     return;
   }
 
-  const chordInfo = detectChord(notes);
-  const uniquePcs = Array.from(new Set(notes)).sort((a, b) => a - b);
-  const noteNames = uniquePcs.map((pc) => getNoteName(pc)).join(" - ");
+  const notesPc = notesMidi.map(m => m % 12);
+  const chordInfo = detectChord(notesPc);
+  
+  const uniqueMidis = Array.from(new Set(notesMidi)).sort((a, b) => a - b);
+  const noteNames = uniqueMidis.map((m) => getNoteName(m, showOctave)).join(" - ");
 
   if (!chordInfo) {
     resultEl.textContent = t("msg_unknown_chord");
     detailEl.textContent = t("msg_notes_detected") + noteNames;
   } else {
-    resultEl.textContent = chordInfo.name;
+    let chordName = chordInfo.name;
+    
+    // Try to find the octave of the root note
+    if (showOctave) {
+      if (chordInfo.rootPc !== undefined) {
+        // Find the lowest MIDI note that matches the root PC
+        const rootMidi = notesMidi.sort((a, b) => a - b).find(m => m % 12 === chordInfo.rootPc);
+        if (rootMidi !== undefined) {
+          const octave = Math.floor(rootMidi / 12) - 1;
+          chordName += ` (${octave})`;
+        }
+      } else if (chordInfo.quality === "single_note") {
+         // For single note, we can just take the first note's octave
+         const m = notesMidi[0];
+         const octave = Math.floor(m / 12) - 1;
+         chordName += ` (${octave})`;
+      }
+    }
+
+    resultEl.textContent = chordName;
     let extra;
     if (chordInfo.isPowerChord) {
       extra = t("msg_type") + t("power_chord") + t("msg_notes") + noteNames;
@@ -450,6 +531,7 @@ function detectChord(notePcs) {
     return {
       name: rootName,
       root: rootName,
+      rootPc: pcs[0],
       quality: "single_note",
     };
   }
@@ -465,6 +547,7 @@ function detectChord(notePcs) {
       return {
         name: rootName + "5",
         root: rootName,
+        rootPc: rootPc,
         quality: "power_chord",
         isPowerChord: true,
       };
@@ -501,6 +584,7 @@ function detectChord(notePcs) {
   return {
     name: rootName + bestMatch.pattern.suffix,
     root: rootName,
+    rootPc: bestMatch.rootPc,
     quality: bestMatch.pattern.name,
   };
 }

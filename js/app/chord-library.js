@@ -392,6 +392,7 @@ const state = {
   voicingIndex: 0,
   tuning: "standard",
   notation: localStorage.getItem("guitar_notation") || "anglo",
+  showOctave: false,
 };
 
 // --- DOM Elements ---
@@ -406,6 +407,7 @@ const voicingCounter = document.getElementById("voicingCounter");
 const langSelect = document.getElementById("langSelect");
 const notationSelect = document.getElementById("notationSelect");
 const tuningSelect = document.getElementById("tuningSelect");
+const showOctaveCb = document.getElementById("showOctaveCb");
 
 // --- Initialization ---
 document.addEventListener("DOMContentLoaded", async () => {
@@ -435,6 +437,20 @@ document.addEventListener("DOMContentLoaded", async () => {
       state.notation = "latin";
       notationSelect.value = "latin";
     }
+  }
+
+  // Load Show Octave preference
+  const savedShowOctave = localStorage.getItem("guitar_show_octave");
+  if (savedShowOctave !== null) {
+    state.showOctave = savedShowOctave === "true";
+  }
+  if (showOctaveCb) {
+    showOctaveCb.checked = state.showOctave;
+    showOctaveCb.addEventListener("change", (e) => {
+      state.showOctave = e.target.checked;
+      localStorage.setItem("guitar_show_octave", state.showOctave);
+      updateDisplay();
+    });
   }
 
   // Load Translations
@@ -505,11 +521,20 @@ function init() {
   updateDisplay();
 }
 
-function getNoteName(noteIndex) {
+function getNoteName(midiOrPc, withOctave = false) {
+  const pc = midiOrPc % 12;
+  let name;
   if (state.notation === "latin") {
-    return NOTES_LATIN[noteIndex];
+    name = NOTES_LATIN[pc];
+  } else {
+    name = NOTES_SHARP[pc];
   }
-  return NOTES_SHARP[noteIndex];
+  
+  if (withOctave && midiOrPc >= 12) {
+    const octave = Math.floor(midiOrPc / 12) - 1;
+    return name + octave;
+  }
+  return name;
 }
 
 function renderRootPicker() {
@@ -571,7 +596,28 @@ function updateDisplay() {
   const displayRoot = rootIndex !== -1 ? getNoteName(rootIndex) : state.root;
   const displayType = window.t ? window.t("type_" + state.type) : state.type;
 
-  chordNameDisplay.textContent = `${displayRoot} ${displayType}`;
+  let title = `${displayRoot} ${displayType}`;
+
+  if (currentChord && state.showOctave) {
+    // Calculate notes with octaves (Standard Tuning: E2, A2, D3, G3, B3, E4)
+    // Strings 6 to 1: [40, 45, 50, 55, 59, 64]
+    const standardTuning = [40, 45, 50, 55, 59, 64];
+    const notes = [];
+    
+    // currentChord.frets is ordered String 6 to String 1
+    currentChord.frets.forEach((fret, index) => {
+      if (fret !== -1) {
+        const midi = standardTuning[index] + fret;
+        notes.push(getNoteName(midi, true));
+      }
+    });
+    
+    if (notes.length > 0) {
+      title += ` (${notes.join(" - ")})`;
+    }
+  }
+
+  chordNameDisplay.textContent = title;
 
   // Update Controls
   voicingCounter.textContent =

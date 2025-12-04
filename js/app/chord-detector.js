@@ -30,9 +30,14 @@ const NOTE_NAMES_LATIN = [
 
 let currentNotation = "latin";
 
-function getNoteName(midiOrPc) {
+function getNoteName(midiOrPc, withOctave = false) {
   const pc = midiOrPc % 12;
-  return currentNotation === "latin" ? NOTE_NAMES_LATIN[pc] : NOTE_NAMES[pc];
+  const name = currentNotation === "latin" ? NOTE_NAMES_LATIN[pc] : NOTE_NAMES[pc];
+  if (withOctave) {
+    const octave = Math.floor(midiOrPc / 12) - 1;
+    return name + octave;
+  }
+  return name;
 }
 
 // Standard MIDI tuning: E2, A2, D3, G3, B3, E4
@@ -201,6 +206,7 @@ const resetDetectionSettingsBtn = document.getElementById("resetDetectionSetting
 const enableLogsCheckbox = document.getElementById("enableLogsCheckbox");
 const clearLogsBtn = document.getElementById("clearLogsBtn");
 const logOutputEl = document.getElementById("logOutput");
+const showOctaveCb = document.getElementById("showOctaveCb");
 
 const waveCanvas = document.getElementById("waveCanvas");
 const waveCtx = waveCanvas.getContext("2d");
@@ -213,9 +219,11 @@ function log2(x) {
 // ===================== Logging / Debug =====================
 const LOG_ENABLED_KEY = "chordDetectorLogsEnabled";
 const DETECTION_SETTINGS_KEY = "chordDetectorDetectionSettings";
+const SHOW_OCTAVE_KEY = "guitar_show_octave";
 const LOG_MAX_LINES = 200;
 
 let loggingEnabled = true;
+let showOctave = false;
 let lastLoggedNoteMidi = null;
 let lastLoggedChordLabel = "";
 
@@ -239,6 +247,16 @@ function logMessage(message) {
 }
 
 function initLogUI() {
+  if (showOctaveCb) {
+    const stored = localStorage.getItem(SHOW_OCTAVE_KEY);
+    showOctave = stored === "true";
+    showOctaveCb.checked = showOctave;
+    showOctaveCb.addEventListener("change", (e) => {
+      showOctave = e.target.checked;
+      localStorage.setItem(SHOW_OCTAVE_KEY, showOctave);
+    });
+  }
+
   if (enableLogsCheckbox) {
     const stored = localStorage.getItem(LOG_ENABLED_KEY);
     if (stored !== null) {
@@ -402,7 +420,7 @@ function frequencyToNote(freq) {
   // Convert frequency to approximate MIDI note
   const midi = Math.round(69 + 12 * log2(freq / 440));
   const pc = ((midi % 12) + 12) % 12;
-  const name = getNoteName(pc);
+  const name = getNoteName(midi, true);
   const exactFreq = 440 * Math.pow(2, (midi - 69) / 12);
   const cents = 1200 * log2(freq / exactFreq);
   return { midi, name, exactFreq, cents, freq };
@@ -553,7 +571,18 @@ function detectChordFromSpectrum() {
   }
 
   const rootName = getNoteName(best.rootClass);
-  const label = rootName + best.type.short;
+  let label = rootName + best.type.short;
+  
+  // Add octave to chord name if enabled
+  if (showOctave) {
+    // Find the lowest MIDI note that matches the root class
+    const rootMidi = best.noteClasses.sort((a, b) => a - b).find(m => ((m % 12) + 12) % 12 === best.rootClass);
+    if (rootMidi !== undefined) {
+      const octave = Math.floor(rootMidi / 12) - 1;
+      label += ` (${octave})`;
+    }
+  }
+
   const typeName = window.t ? window.t(best.type.key) : best.type.key;
 
   const presentNotes = best.expected
@@ -564,7 +593,7 @@ function detectChordFromSpectrum() {
     label,
     description: `${rootName} ${typeName.toLowerCase()}`,
     presentNotes,
-    allNotes: best.noteClasses.map((n) => getNoteName(n)),
+    allNotes: best.noteClasses.map((n) => getNoteName(n, showOctave)),
   };
 }
 
@@ -644,7 +673,7 @@ function analysisLoop() {
         const msgApprox = window.t ? window.t("msg_approx") : "(approx)";
         const approx = sf.diff > 0.4 ? ` ${msgApprox}` : "";
         stringFretDisplay.textContent = `${sf.string.name}, fret ${sf.fret}${approx}`;
-        const noteName = getNoteName((sf.string.midi + sf.fret) % 12);
+        const noteName = getNoteName(sf.string.midi + sf.fret, true); // Always show octave for suggested position as it is specific
         const msgSuggested = window.t
           ? window.t("msg_suggested_note")
           : "Note at suggested position:";
@@ -662,7 +691,7 @@ function analysisLoop() {
 
       // LOG: If the note is different from the last logged one, show it
       if (lastLoggedNoteMidi !== noteInfo.midi) {
-        logMessage(`${window.t ? window.t("msg_note_detected") : "Note detected"}: ${noteInfo.name} (${freq.toFixed(1)} Hz)`);
+        logMessage(`${window.t ? window.t("msg_note_detected") : "Note detected"}: ${noteInfo.name}${showOctave ? ' (' + (Math.floor(noteInfo.midi/12)-1) + ')' : ''} (${freq.toFixed(1)} Hz)`);
         lastLoggedNoteMidi = noteInfo.midi;
       }
 

@@ -6,6 +6,7 @@ window.translations_es = {
   label_tuning: "Afinación:",
   label_notation: "Notación:",
   label_language: "Idioma:",
+  label_show_octave: "Mostrar Octava",
   notation_latin: "Latina (Do, Re, Mi...)",
   notation_anglo: "Anglosajona (C, D, E...)",
   label_tuning_name: "Nombre afinación:",
