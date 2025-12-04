@@ -14,7 +14,7 @@ const CHORD_DATA = {
       { frets: [8, 10, 10, 9, 8, 8], fingers: [1, 3, 4, 2, 1, 1], bar: { fret: 8, finger: 1, strings: [1, 6] } } // Barre C (E shape)
     ],
     'Minor': [
-      { frets: [-1, 3, 5, 5, 4, 3], fingers: [0, 1, 3, 4, 2, 1], bar: { fret: 3, finger: 1, strings: [1, 5] } },
+      { frets: [-1, 3, 5, 5, 4, 3], fingers: [0, 1, 3, 4, 2, 1], bar: { fret: 3, finger: 1, strings: [1, 6] } },
       { frets: [8, 10, 10, 8, 8, 8], fingers: [1, 3, 4, 1, 1, 1], bar: { fret: 8, finger: 1, strings: [1, 6] } }
     ],
     '7': [
@@ -24,66 +24,66 @@ const CHORD_DATA = {
   },
   'C#': {
     'Major': [
-      { frets: [-1, 4, 6, 6, 6, 4], fingers: [0, 1, 2, 3, 4, 1], bar: { fret: 4, finger: 1, strings: [1, 5] } },
+      { frets: [-1, 4, 6, 6, 6, 4], fingers: [0, 1, 2, 3, 4, 1], bar: { fret: 4, finger: 1, strings: [1, 6] } },
       { frets: [9, 11, 11, 10, 9, 9], fingers: [1, 3, 4, 2, 1, 1], bar: { fret: 9, finger: 1, strings: [1, 6] } }
     ],
     'Minor': [
-      { frets: [-1, 4, 6, 6, 5, 4], fingers: [0, 1, 3, 4, 2, 1], bar: { fret: 4, finger: 1, strings: [1, 5] } },
+      { frets: [-1, 4, 6, 6, 5, 4], fingers: [0, 1, 3, 4, 2, 1], bar: { fret: 4, finger: 1, strings: [1, 6] } },
       { frets: [9, 11, 11, 9, 9, 9], fingers: [1, 3, 4, 1, 1, 1], bar: { fret: 9, finger: 1, strings: [1, 6] } }
     ],
     '7': [
-      { frets: [-1, 4, 6, 4, 6, 4], fingers: [0, 1, 3, 1, 4, 1], bar: { fret: 4, finger: 1, strings: [1, 5] } }
+      { frets: [-1, 4, 6, 4, 6, 4], fingers: [0, 1, 3, 1, 4, 1], bar: { fret: 4, finger: 1, strings: [1, 6] } }
     ]
   },
   'D': {
     'Major': [
       { frets: [-1, -1, 0, 2, 3, 2], fingers: [0, 0, 0, 1, 3, 2] },
-      { frets: [-1, 5, 7, 7, 7, 5], fingers: [0, 1, 2, 3, 4, 1], bar: { fret: 5, finger: 1, strings: [1, 5] } }
+      { frets: [-1, 5, 7, 7, 7, 5], fingers: [0, 1, 2, 3, 4, 1], bar: { fret: 5, finger: 1, strings: [1, 6] } }
     ],
     'Minor': [
       { frets: [-1, -1, 0, 2, 3, 1], fingers: [0, 0, 0, 2, 3, 1] },
-      { frets: [-1, 5, 7, 7, 6, 5], fingers: [0, 1, 3, 4, 2, 1], bar: { fret: 5, finger: 1, strings: [1, 5] } }
+      { frets: [-1, 5, 7, 7, 6, 5], fingers: [0, 1, 3, 4, 2, 1], bar: { fret: 5, finger: 1, strings: [1, 6] } }
     ],
     '7': [
       { frets: [-1, -1, 0, 2, 1, 2], fingers: [0, 0, 0, 2, 1, 3] },
-      { frets: [-1, 5, 7, 5, 7, 5], fingers: [0, 1, 3, 1, 4, 1], bar: { fret: 5, finger: 1, strings: [1, 5] } }
+      { frets: [-1, 5, 7, 5, 7, 5], fingers: [0, 1, 3, 1, 4, 1], bar: { fret: 5, finger: 1, strings: [1, 6] } }
     ]
   },
   'D#': {
     'Major': [
-      { frets: [-1, 6, 8, 8, 8, 6], fingers: [0, 1, 2, 3, 4, 1], bar: { fret: 6, finger: 1, strings: [1, 5] } },
+      { frets: [-1, 6, 8, 8, 8, 6], fingers: [0, 1, 2, 3, 4, 1], bar: { fret: 6, finger: 1, strings: [1, 6] } },
       { frets: [11, 13, 13, 12, 11, 11], fingers: [1, 3, 4, 2, 1, 1], bar: { fret: 11, finger: 1, strings: [1, 6] } }
     ],
     'Minor': [
-      { frets: [-1, 6, 8, 8, 7, 6], fingers: [0, 1, 3, 4, 2, 1], bar: { fret: 6, finger: 1, strings: [1, 5] } },
+      { frets: [-1, 6, 8, 8, 7, 6], fingers: [0, 1, 3, 4, 2, 1], bar: { fret: 6, finger: 1, strings: [1, 6] } },
       { frets: [11, 13, 13, 11, 11, 11], fingers: [1, 3, 4, 1, 1, 1], bar: { fret: 11, finger: 1, strings: [1, 6] } }
     ],
     '7': [
-      { frets: [-1, 6, 8, 6, 8, 6], fingers: [0, 1, 3, 1, 4, 1], bar: { fret: 6, finger: 1, strings: [1, 5] } }
+      { frets: [-1, 6, 8, 6, 8, 6], fingers: [0, 1, 3, 1, 4, 1], bar: { fret: 6, finger: 1, strings: [1, 6] } }
     ]
   },
   'E': {
     'Major': [
       { frets: [0, 2, 2, 1, 0, 0], fingers: [0, 2, 3, 1, 0, 0] },
-      { frets: [-1, 7, 9, 9, 9, 7], fingers: [0, 1, 2, 3, 4, 1], bar: { fret: 7, finger: 1, strings: [1, 5] } }
+      { frets: [-1, 7, 9, 9, 9, 7], fingers: [0, 1, 2, 3, 4, 1], bar: { fret: 7, finger: 1, strings: [1, 6] } }
     ],
     'Minor': [
       { frets: [0, 2, 2, 0, 0, 0], fingers: [0, 2, 3, 0, 0, 0] },
-      { frets: [-1, 7, 9, 9, 8, 7], fingers: [0, 1, 3, 4, 2, 1], bar: { fret: 7, finger: 1, strings: [1, 5] } }
+      { frets: [-1, 7, 9, 9, 8, 7], fingers: [0, 1, 3, 4, 2, 1], bar: { fret: 7, finger: 1, strings: [1, 6] } }
     ],
     '7': [
       { frets: [0, 2, 0, 1, 0, 0], fingers: [0, 2, 0, 1, 0, 0] },
-      { frets: [-1, 7, 9, 7, 9, 7], fingers: [0, 1, 3, 1, 4, 1], bar: { fret: 7, finger: 1, strings: [1, 5] } }
+      { frets: [-1, 7, 9, 7, 9, 7], fingers: [0, 1, 3, 1, 4, 1], bar: { fret: 7, finger: 1, strings: [1, 6] } }
     ]
   },
   'F': {
     'Major': [
       { frets: [1, 3, 3, 2, 1, 1], fingers: [1, 3, 4, 2, 1, 1], bar: { fret: 1, finger: 1, strings: [1, 6] } },
-      { frets: [-1, 8, 10, 10, 10, 8], fingers: [0, 1, 2, 3, 4, 1], bar: { fret: 8, finger: 1, strings: [1, 5] } }
+      { frets: [-1, 8, 10, 10, 10, 8], fingers: [0, 1, 2, 3, 4, 1], bar: { fret: 8, finger: 1, strings: [1, 6] } }
     ],
     'Minor': [
       { frets: [1, 3, 3, 1, 1, 1], fingers: [1, 3, 4, 1, 1, 1], bar: { fret: 1, finger: 1, strings: [1, 6] } },
-      { frets: [-1, 8, 10, 10, 9, 8], fingers: [0, 1, 3, 4, 2, 1], bar: { fret: 8, finger: 1, strings: [1, 5] } }
+      { frets: [-1, 8, 10, 10, 9, 8], fingers: [0, 1, 3, 4, 2, 1], bar: { fret: 8, finger: 1, strings: [1, 6] } }
     ],
     '7': [
       { frets: [1, 3, 1, 2, 1, 1], fingers: [1, 3, 1, 2, 1, 1], bar: { fret: 1, finger: 1, strings: [1, 6] } }
@@ -92,11 +92,11 @@ const CHORD_DATA = {
   'F#': {
     'Major': [
       { frets: [2, 4, 4, 3, 2, 2], fingers: [1, 3, 4, 2, 1, 1], bar: { fret: 2, finger: 1, strings: [1, 6] } },
-      { frets: [-1, 9, 11, 11, 11, 9], fingers: [0, 1, 2, 3, 4, 1], bar: { fret: 9, finger: 1, strings: [1, 5] } }
+      { frets: [-1, 9, 11, 11, 11, 9], fingers: [0, 1, 2, 3, 4, 1], bar: { fret: 9, finger: 1, strings: [1, 6] } }
     ],
     'Minor': [
       { frets: [2, 4, 4, 2, 2, 2], fingers: [1, 3, 4, 1, 1, 1], bar: { fret: 2, finger: 1, strings: [1, 6] } },
-      { frets: [-1, 9, 11, 11, 10, 9], fingers: [0, 1, 3, 4, 2, 1], bar: { fret: 9, finger: 1, strings: [1, 5] } }
+      { frets: [-1, 9, 11, 11, 10, 9], fingers: [0, 1, 3, 4, 2, 1], bar: { fret: 9, finger: 1, strings: [1, 6] } }
     ],
     '7': [
       { frets: [2, 4, 2, 3, 2, 2], fingers: [1, 3, 1, 2, 1, 1], bar: { fret: 2, finger: 1, strings: [1, 6] } }
@@ -109,7 +109,7 @@ const CHORD_DATA = {
     ],
     'Minor': [
       { frets: [3, 5, 5, 3, 3, 3], fingers: [1, 3, 4, 1, 1, 1], bar: { fret: 3, finger: 1, strings: [1, 6] } },
-      { frets: [-1, 10, 12, 12, 11, 10], fingers: [0, 1, 3, 4, 2, 1], bar: { fret: 10, finger: 1, strings: [1, 5] } }
+      { frets: [-1, 10, 12, 12, 11, 10], fingers: [0, 1, 3, 4, 2, 1], bar: { fret: 10, finger: 1, strings: [1, 6] } }
     ],
     '7': [
       { frets: [3, 2, 0, 0, 0, 1], fingers: [3, 2, 0, 0, 0, 1] },
@@ -143,29 +143,29 @@ const CHORD_DATA = {
   },
   'A#': {
     'Major': [
-      { frets: [-1, 1, 3, 3, 3, 1], fingers: [0, 1, 2, 3, 4, 1], bar: { fret: 1, finger: 1, strings: [1, 5] } },
+      { frets: [-1, 1, 3, 3, 3, 1], fingers: [0, 1, 2, 3, 4, 1], bar: { fret: 1, finger: 1, strings: [1, 6] } },
       { frets: [6, 8, 8, 7, 6, 6], fingers: [1, 3, 4, 2, 1, 1], bar: { fret: 6, finger: 1, strings: [1, 6] } }
     ],
     'Minor': [
-      { frets: [-1, 1, 3, 3, 2, 1], fingers: [0, 1, 3, 4, 2, 1], bar: { fret: 1, finger: 1, strings: [1, 5] } },
+      { frets: [-1, 1, 3, 3, 2, 1], fingers: [0, 1, 3, 4, 2, 1], bar: { fret: 1, finger: 1, strings: [1, 6] } },
       { frets: [6, 8, 8, 6, 6, 6], fingers: [1, 3, 4, 1, 1, 1], bar: { fret: 6, finger: 1, strings: [1, 6] } }
     ],
     '7': [
-      { frets: [-1, 1, 3, 1, 3, 1], fingers: [0, 1, 3, 1, 4, 1], bar: { fret: 1, finger: 1, strings: [1, 5] } },
+      { frets: [-1, 1, 3, 1, 3, 1], fingers: [0, 1, 3, 1, 4, 1], bar: { fret: 1, finger: 1, strings: [1, 6] } },
       { frets: [6, 8, 6, 7, 6, 6], fingers: [1, 3, 1, 2, 1, 1], bar: { fret: 6, finger: 1, strings: [1, 6] } }
     ]
   },
   'B': {
     'Major': [
-      { frets: [-1, 2, 4, 4, 4, 2], fingers: [0, 1, 2, 3, 4, 1], bar: { fret: 2, finger: 1, strings: [1, 5] } },
+      { frets: [-1, 2, 4, 4, 4, 2], fingers: [0, 1, 2, 3, 4, 1], bar: { fret: 2, finger: 1, strings: [1, 6] } },
       { frets: [7, 9, 9, 8, 7, 7], fingers: [1, 3, 4, 2, 1, 1], bar: { fret: 7, finger: 1, strings: [1, 6] } }
     ],
     'Minor': [
-      { frets: [-1, 2, 4, 4, 3, 2], fingers: [0, 1, 3, 4, 2, 1], bar: { fret: 2, finger: 1, strings: [1, 5] } },
+      { frets: [-1, 2, 4, 4, 3, 2], fingers: [0, 1, 3, 4, 2, 1], bar: { fret: 2, finger: 1, strings: [1, 6] } },
       { frets: [7, 9, 9, 7, 7, 7], fingers: [1, 3, 4, 1, 1, 1], bar: { fret: 7, finger: 1, strings: [1, 6] } }
     ],
     '7': [
-      { frets: [-1, 2, 4, 2, 4, 2], fingers: [0, 1, 3, 1, 4, 1], bar: { fret: 2, finger: 1, strings: [1, 5] } },
+      { frets: [-1, 2, 4, 2, 4, 2], fingers: [0, 1, 3, 1, 4, 1], bar: { fret: 2, finger: 1, strings: [1, 6] } },
       { frets: [7, 9, 7, 8, 7, 7], fingers: [1, 3, 1, 2, 1, 1], bar: { fret: 7, finger: 1, strings: [1, 6] } }
     ]
   }
