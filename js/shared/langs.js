@@ -7,6 +7,8 @@ function detectTranslationPrefix() {
         return "chord-detector/chord-detector";
     } else if (path.indexOf("chords.html") !== -1) {
         return "chords/chords";
+    } else if (path.indexOf("chord-library.html") !== -1) {
+        return "chord-library/chord-library";
     }
     return "index";
 }
