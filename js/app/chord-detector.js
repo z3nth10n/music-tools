@@ -47,6 +47,67 @@ const STRING_TUNINGS = [
 
 const MAX_FRET = 20;
 
+// ===================== Note History for Chord Detection =====================
+// Ventana de tiempo que usamos para reconstruir el acorde a partir de notas sueltas
+const NOTE_HISTORY_WINDOW_MS = 900;     // entre 700 y 1000 va bien
+const MIN_NOTES_FOR_CHORD = 3;         // mínimo de notas distintas para considerar que hay acorde
+const MAX_DEVIATION_CENTS = 35;        // ignorar detecciones muy desafinadas / ruido
+
+// Guardamos notas detectadas recientemente: { pc, time }
+let recentNotes = [];
+
+/**
+ * Registra una nota en el historial si está suficientemente afinada.
+ * noteInfo: resultado de frequencyToNote(freq)
+ * timestampMs: Date.now()
+ */
+function registerNoteEvent(noteInfo, timestampMs) {
+  if (!noteInfo || typeof noteInfo.cents !== "number") return;
+
+  // Si está muy fuera de tono la descartamos (ruido / detección mala)
+  if (Math.abs(noteInfo.cents) > MAX_DEVIATION_CENTS) return;
+
+  const pc = ((noteInfo.midi % 12) + 12) % 12;
+
+  const last = recentNotes[recentNotes.length - 1];
+  // Si es la misma nota repetida muy rápido, sólo refrescamos el tiempo
+  if (last && last.pc === pc && timestampMs - last.time < 80) {
+    last.time = timestampMs;
+  } else {
+    recentNotes.push({ pc, time: timestampMs });
+  }
+
+  // Limpiamos notas más antiguas que la ventana
+  const cutoff = timestampMs - NOTE_HISTORY_WINDOW_MS;
+  recentNotes = recentNotes.filter((n) => n.time >= cutoff);
+}
+
+/**
+ * Si llevamos mucho tiempo en silencio, vaciamos el historial para no arrastrar acordes viejos.
+ */
+function resetNoteHistoryIfIdle(timestampMs) {
+  const last = recentNotes[recentNotes.length - 1];
+  if (!last) return;
+  if (timestampMs - last.time > NOTE_HISTORY_WINDOW_MS) {
+    recentNotes = [];
+  }
+}
+
+/**
+ * Devuelve una lista de clases de nota (0–11) ordenadas por frecuencia de aparición
+ * en la ventana de tiempo reciente.
+ */
+function getNoteClassesFromHistory() {
+  const counts = new Map();
+  for (const n of recentNotes) {
+    counts.set(n.pc, (counts.get(n.pc) || 0) + 1);
+  }
+
+  // Ordenar de más usada a menos (las cuerdas más tocadas pesan más)
+  const entries = Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
+  return entries.map(([pc]) => pc);
+}
+
 const CHORD_TYPES = [
   { key: "chord_major", short: "", intervals: [0, 4, 7] },
   { key: "chord_minor", short: "m", intervals: [0, 3, 7] },
@@ -88,7 +149,7 @@ const timeDomainBufferSize = 2048;
 let timeDomainBuffer = null;
 
 let lastAnalysisTime = 0;
-let analysisInterval = 100; // ms
+let analysisInterval = 50; // ms
 
 // ===================== UI Elements =====================
 const toggleButton = document.getElementById("toggleButton");
@@ -180,85 +241,60 @@ function autoCorrelate(buffer, sampleRate) {
   return frequency;
 }
 
-// ===================== Chord Detection (Very Approximate) =====================
+// ===================== Chord Detection (From Note History) =====================
 function detectChordFromSpectrum() {
-  if (!analyser || !audioContext) return null;
+  // En la nueva versión usamos sólo las notas detectadas recientemente
+  const noteClasses = getNoteClassesFromHistory();
+  if (noteClasses.length < MIN_NOTES_FOR_CHORD) return null;
 
-  const binCount = analyser.frequencyBinCount;
-  const spectrum = new Uint8Array(binCount);
-  analyser.getByteFrequencyData(spectrum);
-
-  // Pick the highest peaks
-  const bins = [];
-  for (let i = 0; i < binCount; i++) {
-    bins.push({ index: i, value: spectrum[i] });
-  }
-  bins.sort((a, b) => b.value - a.value);
-
-  const noteClassesSet = new Set();
-  const maxPeaks = 12;
-  const amplitudeThreshold = 80; // 0-255
-
-  for (let i = 0; i < maxPeaks && i < bins.length; i++) {
-    const { index, value } = bins[i];
-    if (value < amplitudeThreshold) break;
-
-    const freq = (index * audioContext.sampleRate) / analyser.fftSize;
-    if (freq < 80 || freq > 2000) continue;
-
-    const midi = Math.round(69 + 12 * log2(freq / 440));
-    const noteClass = ((midi % 12) + 12) % 12;
-    noteClassesSet.add(noteClass);
-  }
-
-  const noteClasses = Array.from(noteClassesSet);
-  if (noteClasses.length < 3) return null;
-
-  // Try to fit the set of notes with some chord type
   let best = null;
 
+  // Probamos cada nota presente como posible raíz
   for (const rootClass of noteClasses) {
     for (const type of CHORD_TYPES) {
       const expected = type.intervals.map((iv) => (rootClass + iv) % 12);
+
       let present = 0;
       for (const n of expected) {
         if (noteClasses.includes(n)) present++;
       }
 
-      if (present >= Math.max(3, expected.length - 1)) {
-        const coverage = present / expected.length;
-        const extras = noteClasses.length - present;
-        const quality = coverage - extras * 0.05;
+      // Al menos raíz + otra (tercera o quinta)
+      if (present < 2) continue;
 
-        if (!best || quality > best.quality) {
-          best = {
-            rootClass,
-            type,
-            quality,
-            noteClasses,
-            expected,
-          };
-        }
+      const coverage = present / expected.length;
+      const extras = noteClasses.filter((n) => !expected.includes(n)).length;
+      // Penalizamos notas "de más" un poco
+      const quality = coverage - extras * 0.08;
+
+      if (!best || quality > best.quality) {
+        best = {
+          rootClass,
+          type,
+          quality,
+          noteClasses,
+          expected,
+        };
       }
     }
   }
 
-  if (!best) return null;
+  // Si el "score" es bajo, preferimos no mostrar acorde antes que inventarlo
+  if (!best || best.quality < 0.45) return null;
 
   const rootName = getNoteName(best.rootClass);
   const label = rootName + best.type.short;
   const typeName = window.t ? window.t(best.type.key) : best.type.key;
 
-  // Present notes (only those fitting the chord)
   const presentNotes = best.expected
-    .filter((n) => best.noteClasses.includes(n))
+    .filter((n) => noteClasses.includes(n))
     .map((n) => getNoteName(n));
 
   return {
     label,
     description: `${rootName} ${typeName.toLowerCase()}`,
     presentNotes,
-    allNotes: best.noteClasses.map((n) => getNoteName(n)),
+    allNotes: noteClasses.map((n) => getNoteName(n)),
   };
 }
 
@@ -345,12 +381,18 @@ function analysisLoop() {
         stringFretDisplay.textContent = "—";
         stringFretDetail.textContent = "";
       }
+
+      // >>> NUEVO: registrar la nota para detección de acordes
+      registerNoteEvent(noteInfo, now);
+
     } else {
       updateUIForSilence();
       if (chordFreqDisplay) chordFreqDisplay.textContent = "";
+      // >>> NUEVO: si llevamos rato en silencio, vaciar historial
+      resetNoteHistoryIfIdle(now);
     }
 
-    // Chord detection (very basic)
+    // Detección de acorde usando el nuevo motor basado en historial
     const chord = detectChordFromSpectrum();
     if (chord) {
       chordDisplay.textContent = chord.label;
