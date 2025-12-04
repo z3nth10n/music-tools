@@ -261,8 +261,8 @@
 
       <label for="notationSelect">Notación:</label>
       <select id="notationSelect">
-        <option value="anglo">Anglosajona (C, D, E...)</option>
         <option value="latin">Latina (Do, Re, Mi...)</option>
+        <option value="anglo">Anglosajona (C, D, E...)</option>
       </select>
     </div>
 
@@ -354,7 +354,7 @@
     const NOTE_NAMES_LATIN = ["Do", "Do#", "Re", "Re#", "Mi", "Fa",
       "Fa#", "Sol", "Sol#", "La", "La#", "Si"];
 
-    let currentNotation = "anglo";
+    let currentNotation = "latin";
 
     function getNoteName(pc) {
       return currentNotation === "latin"
@@ -401,7 +401,7 @@
       const saveTuningButton = document.getElementById("saveTuningButton");
       const calcButton = document.getElementById("calcButton");
 
-      currentNotation = notationSelect.value || "anglo";
+      currentNotation = notationSelect.value || "latin";
 
       // Fill note options for each string
       buildStringTuningOptions();
