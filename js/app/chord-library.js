@@ -557,6 +557,7 @@ const state = {
   voicingIndex: 0,
   tuning: "standard",
   notation: localStorage.getItem("guitar_notation") || "anglo",
+  soundProfile: localStorage.getItem("guitar_sound_profile") || "guitar-clean",
   showOctave: false,
 };
 
@@ -571,6 +572,7 @@ const nextBtn = document.getElementById("nextVoicing");
 const voicingCounter = document.getElementById("voicingCounter");
 const langSelect = document.getElementById("langSelect");
 const notationSelect = document.getElementById("notationSelect");
+const soundSelect = document.getElementById("soundSelect");
 const tuningSelect = document.getElementById("tuningSelect");
 const showOctaveCb = document.getElementById("showOctaveCb");
 const playChordBtn = document.getElementById("playChordBtn");
@@ -683,6 +685,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderRootPicker();
     updateDisplay();
   });
+
+  if (soundSelect) {
+    soundSelect.value = state.soundProfile;
+    soundSelect.addEventListener("change", async (e) => {
+      state.soundProfile = e.target.value;
+      localStorage.setItem("guitar_sound_profile", state.soundProfile);
+      await loadGuitarSamples();
+    });
+  }
 });
 
 function init() {
@@ -716,11 +727,16 @@ function init() {
 }
 
 async function loadGuitarSamples() {
-  console.log("Starting to load guitar samples...");
+  console.log(`Starting to load guitar samples (${state.soundProfile})...`);
+  // Clear existing buffers if reloading
+  window.sampleBuffers = {};
+  // Clear decoded buffers
+  for (const key in audioBuffers) delete audioBuffers[key];
+
   const promises = Object.entries(AVAILABLE_SAMPLES).map(
     async ([midi, filename]) => {
       try {
-        const response = await fetch(`sounds/guitar-clean/${filename}`);
+        const response = await fetch(`sounds/${state.soundProfile}/${filename}`);
         if (response.ok) {
           const arrayBuffer = await response.arrayBuffer();
           window.sampleBuffers[midi] = arrayBuffer;
