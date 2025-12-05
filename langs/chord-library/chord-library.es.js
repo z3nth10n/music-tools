@@ -98,5 +98,6 @@ window.translations_es = {
   ctx_add_note: "Añadir nota",
   ctx_remove_note: "Quitar nota",
   ctx_open_string: "Cuerda al aire",
-  ctx_mute_string: "Mutear cuerda"
+  ctx_mute_string: "Mutear cuerda",
+  ctx_disable_logic: "Desactivar lógica"
 };

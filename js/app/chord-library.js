@@ -384,7 +384,7 @@ const CHORD_SHAPES = {
 function generateChordData(tuning) {
   const data = {};
   // Default to E Standard if no tuning provided
-  const currentTuning = tuning || [64, 59, 55, 50, 45, 40]; 
+  const currentTuning = tuning || [64, 59, 55, 50, 45, 40];
   // String 6 is index 5 (40 in E Std), String 5 is index 4 (45 in E Std)
 
   NOTES_SHARP.forEach((root, rootIndex) => {
@@ -551,11 +551,11 @@ function applyOverrides(data) {
     Object.entries(chords).forEach(([root, shape]) => {
       if (!data[root]) data[root] = {};
       const overrides = Array.isArray(shape) ? shape : [shape];
-      
+
       // Normalize overrides (convert "x" or MUTE to -1)
-      const normalizedOverrides = overrides.map(o => ({
+      const normalizedOverrides = overrides.map((o) => ({
         ...o,
-        frets: o.frets.map(f => (f === "x" || f === MUTE) ? -1 : f)
+        frets: o.frets.map((f) => (f === "x" || f === MUTE ? -1 : f)),
       }));
 
       const existing = data[root][type] || [];
@@ -618,10 +618,12 @@ const defaultAdvanced = {
   shiftCents: 0,
   formantFull: 0,
   formantSemitones: 0,
-  formantCents: 0
+  formantCents: 0,
 };
 
-const savedAdvanced = JSON.parse(localStorage.getItem("guitar_advanced_settings")) || defaultAdvanced;
+const savedAdvanced =
+  JSON.parse(localStorage.getItem("guitar_advanced_settings")) ||
+  defaultAdvanced;
 
 const state = {
   root: "C",
@@ -640,8 +642,8 @@ const state = {
   interaction: {
     dragging: null, // { stringIndex, originalFret }
     barreCreating: null, // { startString, fret }
-    dragPos: null // { x, y }
-  }
+    dragPos: null, // { x, y }
+  },
 };
 
 // --- DOM Elements ---
@@ -689,8 +691,6 @@ const AVAILABLE_SAMPLES = {
   // 80: "G#5.mp3", // Missing on server
   // 85: "C#6.mp3", // Missing on server
 };
-
-
 
 // --- Initialization ---
 document.addEventListener("DOMContentLoaded", async () => {
@@ -825,7 +825,7 @@ function init() {
   const savedTuning = localStorage.getItem("guitar_selected_tuning");
   customTunings = loadCustomTunings();
   populateTuningSelect(savedTuning || "builtin::tuning_e_std");
-  
+
   if (savedTuning) {
     updateTuning(savedTuning);
   } else {
@@ -840,24 +840,26 @@ function init() {
   if (saveTuningBtn) {
     saveTuningBtn.addEventListener("click", () => {
       const currentVal = tuningSelect.value;
-      
+
       if (currentVal.startsWith("custom::")) {
         // Overwrite existing custom tuning
         const name = currentVal.split("::")[1];
         customTunings[name] = [...state.currentTuning];
         saveCustomTunings();
-        
+
         // Refresh select and update UI (hides save button)
         populateTuningSelect(currentVal);
         updateTuning(currentVal);
       } else {
         // Create new custom tuning
-        const name = prompt(window.t ? window.t("prompt_tuning_name") : "Enter tuning name:");
+        const name = prompt(
+          window.t ? window.t("prompt_tuning_name") : "Enter tuning name:"
+        );
         if (name) {
           // Save to custom tunings
           customTunings[name] = [...state.currentTuning];
           saveCustomTunings();
-          
+
           // Refresh select and select the new tuning
           const newValue = "custom::" + name;
           populateTuningSelect(newValue);
@@ -873,10 +875,16 @@ function init() {
       const value = tuningSelect.value;
       if (value.startsWith("custom::")) {
         const name = value.split("::")[1];
-        if (confirm((window.t ? window.t("confirm_delete_tuning") : "Delete tuning?") + " " + name)) {
+        if (
+          confirm(
+            (window.t ? window.t("confirm_delete_tuning") : "Delete tuning?") +
+              " " +
+              name
+          )
+        ) {
           delete customTunings[name];
           saveCustomTunings();
-          
+
           // Switch to standard
           populateTuningSelect("builtin::tuning_e_std");
           updateTuning("builtin::tuning_e_std");
@@ -893,8 +901,10 @@ function init() {
 async function loadGuitarSamples() {
   currentLoadSession++;
   const mySessionId = currentLoadSession;
-  console.log(`Starting to load guitar samples (${state.soundProfile}) [Session ${mySessionId}]...`);
-  
+  console.log(
+    `Starting to load guitar samples (${state.soundProfile}) [Session ${mySessionId}]...`
+  );
+
   // Clear existing buffers if reloading
   window.sampleBuffers = {};
   // Clear decoded buffers
@@ -905,9 +915,11 @@ async function loadGuitarSamples() {
       if (mySessionId !== currentLoadSession) return; // Abort if new session started
 
       try {
-        const url = `sounds/${state.soundProfile}/${encodeURIComponent(filename)}`;
+        const url = `sounds/${state.soundProfile}/${encodeURIComponent(
+          filename
+        )}`;
         const response = await fetch(url);
-        
+
         if (mySessionId !== currentLoadSession) return; // Check again
 
         if (response.ok) {
@@ -915,7 +927,9 @@ async function loadGuitarSamples() {
           if (mySessionId !== currentLoadSession) return; // Check again
           window.sampleBuffers[midi] = arrayBuffer;
         } else {
-          console.warn(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
+          console.warn(
+            `Failed to fetch ${url}: ${response.status} ${response.statusText}`
+          );
         }
       } catch (e) {
         console.warn(`Could not load sample ${filename}`, e);
@@ -923,9 +937,12 @@ async function loadGuitarSamples() {
     }
   );
   await Promise.all(promises);
-  
+
   if (mySessionId === currentLoadSession) {
-    console.log(`All samples loaded for session ${mySessionId}. Count:`, Object.keys(window.sampleBuffers).length);
+    console.log(
+      `All samples loaded for session ${mySessionId}. Count:`,
+      Object.keys(window.sampleBuffers).length
+    );
   }
 }
 
@@ -987,10 +1004,12 @@ function playBestSample(targetMidi, startTime, duration, delay) {
   let minDistance = Infinity;
 
   const availableMidis = Object.keys(audioBuffers).map(Number);
-  
+
   if (availableMidis.length === 0) {
     // Fallback to synth if no samples loaded
-    console.warn("No samples available in audioBuffers, falling back to synth.");
+    console.warn(
+      "No samples available in audioBuffers, falling back to synth."
+    );
     const frequency = 440 * Math.pow(2, (targetMidi - 69) / 12);
     playTone(frequency, startTime, duration, delay);
     return;
@@ -1017,18 +1036,18 @@ function playBestSample(targetMidi, startTime, duration, delay) {
   source.playbackRate.value = rate;
 
   // --- Advanced Pitch Shift ---
-  const totalDetune = 
-    (state.advanced.shiftOctaves * 1200) +
-    (state.advanced.shiftSemitones * 100) +
-    (state.advanced.shiftFull * 100) + 
+  const totalDetune =
+    state.advanced.shiftOctaves * 1200 +
+    state.advanced.shiftSemitones * 100 +
+    state.advanced.shiftFull * 100 +
     state.advanced.shiftCents;
-  
+
   source.detune.value = totalDetune;
 
   // --- Advanced Formant Shift (Simulated) ---
-  const totalFormantShift = 
-    (state.advanced.formantFull * 100) +
-    (state.advanced.formantSemitones * 100) +
+  const totalFormantShift =
+    state.advanced.formantFull * 100 +
+    state.advanced.formantSemitones * 100 +
     state.advanced.formantCents;
 
   let outputNode = source;
@@ -1037,12 +1056,12 @@ function playBestSample(targetMidi, startTime, duration, delay) {
     const filter = audioCtx.createBiquadFilter();
     filter.type = "peaking";
     filter.Q.value = 1;
-    filter.gain.value = 6; 
-    
+    filter.gain.value = 6;
+
     const baseFreq = 1000;
     const ratio = Math.pow(2, totalFormantShift / 1200);
     filter.frequency.value = baseFreq * ratio;
-    
+
     source.connect(filter);
     outputNode = filter;
   }
@@ -1066,24 +1085,24 @@ function playBestSample(targetMidi, startTime, duration, delay) {
 function playTone(freq, startTime, duration, delay) {
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
-  
-  // Use a mix of triangle and sine for a slightly fuller sound, 
+
+  // Use a mix of triangle and sine for a slightly fuller sound,
   // but for simplicity here we use triangle which has some harmonics.
-  osc.type = 'triangle'; 
+  osc.type = "triangle";
   osc.frequency.value = freq;
-  
+
   osc.connect(gain);
   gain.connect(audioCtx.destination);
-  
+
   const start = startTime + delay;
-  
+
   osc.start(start);
-  
+
   // Envelope to simulate plucked string
   gain.gain.setValueAtTime(0, start);
   gain.gain.linearRampToValueAtTime(0.2, start + 0.02); // Fast attack
   gain.gain.exponentialRampToValueAtTime(0.001, start + duration); // Long decay
-  
+
   osc.stop(start + duration);
 }
 
@@ -1158,15 +1177,27 @@ function updateDisplay() {
   state.customChord = null;
   if (saveChordBtn) saveChordBtn.style.display = "none";
   if (deleteChordBtn) deleteChordBtn.style.display = "none";
-  
+
   // Restore tuning buttons visibility based on current state/selection is tricky if we hid them.
   // But we will stop hiding them in initCanvasInteractions, so we don't need to restore them here.
-  
+
   const chordInfo = document.querySelector(".chord-info");
   if (chordInfo) chordInfo.style.display = "block";
-  
+
   const instructions = document.querySelector(".custom-chord-instructions");
   if (instructions) instructions.style.display = "none";
+
+  // Hide Fret Nav
+  const fretNav = document.getElementById("fretNavControls");
+  if (fretNav) fretNav.style.display = "none";
+
+  // Show voicing controls
+  if (prevBtn) prevBtn.style.display = "flex";
+  if (nextBtn) nextBtn.style.display = "flex";
+  if (voicingCounter) voicingCounter.style.display = "inline";
+
+  const handsIcon = document.querySelector(".hands-icon");
+  if (handsIcon) handsIcon.style.display = "block";
 
   const variations = getVariations();
   const currentChord = variations[state.voicingIndex];
@@ -1182,7 +1213,7 @@ function updateDisplay() {
   if (currentChord && state.showOctave) {
     // Calculate notes with octaves
     // state.currentTuning is [High E, ..., Low E]
-    // We need [Low E, ..., High E] for the loop
+    // We need [Low E, ..., High E] for the loop below
     const currentTuningLowToHigh = [...state.currentTuning].reverse();
     const notes = [];
 
@@ -1239,7 +1270,9 @@ function drawChord(chord) {
   const maxFret = frets.length ? Math.max(...frets) : 0;
 
   let startFret = 1;
-  if (maxFret > 5) {
+  if (state.isCustomMode && state.baseFret !== undefined) {
+    startFret = state.baseFret;
+  } else if (maxFret > 5) {
     startFret = minFret;
   }
 
@@ -1288,7 +1321,7 @@ function drawChord(chord) {
     if (barFret > 0 && barFret <= numFrets) {
       const s1 = Math.min(bar.strings[0], bar.strings[1]);
       const s2 = Math.max(bar.strings[0], bar.strings[1]);
-      
+
       const startIdx = s1 - 1;
       const endIdx = s2 - 1;
 
@@ -1298,7 +1331,9 @@ function drawChord(chord) {
 
       ctx.lineCap = "round";
       ctx.lineWidth = 14;
-      ctx.strokeStyle = isGhost ? "rgba(51, 51, 51, 0.5)" : getFingerColor(bar.finger);
+      ctx.strokeStyle = isGhost
+        ? "rgba(51, 51, 51, 0.5)"
+        : getFingerColor(bar.finger);
       ctx.beginPath();
       ctx.moveTo(x1, y);
       ctx.lineTo(x2, y);
@@ -1309,21 +1344,27 @@ function drawChord(chord) {
   if (chord.bar) {
     drawBarre(chord.bar);
   }
-  
+
   if (state.interaction.barreCreating) {
     const b = state.interaction.barreCreating;
-    drawBarre({
-      fret: b.fret,
-      strings: [b.startString + 1, b.endString + 1],
-      finger: 0
-    }, true);
+    drawBarre(
+      {
+        fret: b.fret,
+        strings: [b.startString + 1, b.endString + 1],
+        finger: 0,
+      },
+      true
+    );
   }
 
   // Draw Dots / Markers
   chord.frets.forEach((fret, stringIndex) => {
     // Skip if this is the dot being dragged
-    if (state.interaction.dragging && state.interaction.dragging.stringIndex === stringIndex) {
-       return;
+    if (
+      state.interaction.dragging &&
+      state.interaction.dragging.stringIndex === stringIndex
+    ) {
+      return;
     }
 
     const x = marginX + stringIndex * stringSpacing;
@@ -1333,12 +1374,37 @@ function drawChord(chord) {
       ctx.fillStyle = "#444";
       ctx.font = "20px Arial";
       ctx.fillText("X", x - 6, marginY - 10);
-    } else if (fret === 0) {
-      ctx.strokeStyle = "#444";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(x, marginY - 15, 6, 0, Math.PI * 2);
-      ctx.stroke();
+    } else if (fret === 0 || fret === -2) {
+      // Check if covered by barre (only if 0, not -2)
+      let drawnAsBarre = false;
+      if (fret === 0 && chord.bar) {
+        const bMin = Math.min(chord.bar.strings[0], chord.bar.strings[1]);
+        const bMax = Math.max(chord.bar.strings[0], chord.bar.strings[1]);
+        const stringNum = stringIndex + 1;
+        if (stringNum >= bMin && stringNum <= bMax) {
+          // It is covered by barre, so it's effectively the barre fret.
+          // We should draw a dot on the barre fret?
+          // Usually the barre line is enough.
+          // But if we want to be explicit, we can leave it.
+          // The barre line is drawn separately.
+          drawnAsBarre = true;
+        }
+      }
+
+      if (!drawnAsBarre || fret === -2) {
+        ctx.strokeStyle = "#444";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(x, marginY - 15, 6, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // If explicit open (-2), maybe add a small indicator?
+        if (fret === -2) {
+          ctx.fillStyle = "#444";
+          ctx.font = "10px Arial";
+          ctx.fillText("O", x - 4, marginY - 12);
+        }
+      }
     } else {
       // Fret position
       const displayFret = fret - startFret + 1;
@@ -1359,29 +1425,32 @@ function drawChord(chord) {
         if (!coveredByBar) {
           // Check if this note is being shadowed by a dragged note
           let isShadowed = false;
-          
+
           // 1. Shadowed by Drag
-          if (state.interaction.dragging && state.interaction.snapString === stringIndex) {
-             const snapFret = state.interaction.snapFret;
-             // If dragging ONTO this string
-             if (state.interaction.dragging.stringIndex !== stringIndex) {
-                if (snapFret > fret) {
-                   isShadowed = true; // Dragged note is higher, so this one is shadowed
-                }
-             }
+          if (
+            state.interaction.dragging &&
+            state.interaction.snapString === stringIndex
+          ) {
+            const snapFret = state.interaction.snapFret;
+            // If dragging ONTO this string
+            if (state.interaction.dragging.stringIndex !== stringIndex) {
+              if (snapFret > fret) {
+                isShadowed = true; // Dragged note is higher, so this one is shadowed
+              }
+            }
           }
-          
+
           // 2. Shadowed by Barre
           if (chord.bar) {
-             const bMin = Math.min(chord.bar.strings[0], chord.bar.strings[1]);
-             const bMax = Math.max(chord.bar.strings[0], chord.bar.strings[1]);
-             const stringNum = stringIndex + 1; // 1-based index
-             
-             if (stringNum >= bMin && stringNum <= bMax) {
-                if (fret < chord.bar.fret) {
-                   isShadowed = true;
-                }
-             }
+            const bMin = Math.min(chord.bar.strings[0], chord.bar.strings[1]);
+            const bMax = Math.max(chord.bar.strings[0], chord.bar.strings[1]);
+            const stringNum = stringIndex + 1; // 1-based index
+
+            if (stringNum >= bMin && stringNum <= bMax) {
+              if (fret < chord.bar.fret) {
+                isShadowed = true;
+              }
+            }
           }
 
           ctx.fillStyle = isShadowed ? "#ff0000" : getFingerColor(finger);
@@ -1399,67 +1468,73 @@ function drawChord(chord) {
       }
     }
   });
-  
+
   // Draw Dragging Dot
   if (state.interaction.dragging && state.interaction.dragPos) {
     const { x, y } = state.interaction.dragPos;
-    
-    // Draw ghost at snap target if available
-    if (state.interaction.snapFret !== undefined && state.interaction.snapFret !== null) {
-       const snapFret = state.interaction.snapFret;
-       const snapString = state.interaction.snapString !== undefined ? state.interaction.snapString : state.interaction.dragging.stringIndex;
-       const sx = marginX + snapString * stringSpacing;
-       
-       // Check for conflict/shadowing
-       let isShadowed = false;
-       let isShadowing = false;
-       
-       // If we are on a different string than source, check existing note
-       if (snapString !== state.interaction.dragging.stringIndex) {
-          const existingFret = chord.frets[snapString];
-          if (existingFret > 0) {
-             // Conflict exists
-             if (snapFret < existingFret) {
-                isShadowed = true; // New note is behind existing
-             } else if (snapFret > existingFret) {
-                isShadowing = true; // New note shadows existing
-             } else {
-                // Same fret - overlap (maybe red too?)
-                isShadowed = true; 
-             }
-          }
-       }
 
-       if (snapFret === -1) {
-          // Mute ghost
-          ctx.fillStyle = "rgba(68, 68, 68, 0.5)";
-          ctx.font = "20px Arial";
-          ctx.fillText("X", sx - 6, marginY - 10);
-       } else if (snapFret === 0) {
-          // Open ghost
-          ctx.strokeStyle = "rgba(68, 68, 68, 0.5)";
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.arc(sx, marginY - 15, 6, 0, Math.PI * 2);
-          ctx.stroke();
-       } else {
-          // Fret ghost
-          const displayFret = snapFret - startFret + 1;
-          if (displayFret > 0 && displayFret <= numFrets) {
-             const sy = marginY + (displayFret - 0.5) * fretSpacing;
-             
-             // Color logic
-             if (isShadowed) {
-                ctx.fillStyle = "rgba(255, 0, 0, 0.5)"; // Red if shadowed
-             } else {
-                ctx.fillStyle = "rgba(51, 51, 51, 0.3)"; // Normal ghost
-             }
-             
-             ctx.beginPath();
-             ctx.arc(sx, sy, 12, 0, Math.PI * 2);
-             ctx.fill();
+    // Draw ghost at snap target if available
+    if (
+      state.interaction.snapFret !== undefined &&
+      state.interaction.snapFret !== null
+    ) {
+      const snapFret = state.interaction.snapFret;
+      const snapString =
+        state.interaction.snapString !== undefined
+          ? state.interaction.snapString
+          : state.interaction.dragging.stringIndex;
+      const sx = marginX + snapString * stringSpacing;
+
+      // Check for conflict/shadowing
+      let isShadowed = false;
+      let isShadowing = false;
+
+      // If we are on a different string than source, check existing note
+      if (snapString !== state.interaction.dragging.stringIndex) {
+        const existingFret = chord.frets[snapString];
+        if (existingFret > 0) {
+          // Conflict exists
+          if (snapFret < existingFret) {
+            isShadowed = true; // New note is behind existing
+          } else if (snapFret > existingFret) {
+            isShadowing = true; // New note shadows existing
+          } else {
+            // Same fret - overlap (maybe red too?)
+            isShadowed = true;
           }
-       }
+        }
+      }
+
+      if (snapFret === -1) {
+        // Mute ghost
+        ctx.fillStyle = "rgba(68, 68, 68, 0.5)";
+        ctx.font = "20px Arial";
+        ctx.fillText("X", sx - 6, marginY - 10);
+      } else if (snapFret === 0) {
+        // Open ghost
+        ctx.strokeStyle = "rgba(68, 68, 68, 0.5)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(sx, marginY - 15, 6, 0, Math.PI * 2);
+        ctx.stroke();
+      } else {
+        // Fret ghost
+        const displayFret = snapFret - startFret + 1;
+        if (displayFret > 0 && displayFret <= numFrets) {
+          const sy = marginY + (displayFret - 0.5) * fretSpacing;
+
+          // Color logic
+          if (isShadowed) {
+            ctx.fillStyle = "rgba(255, 0, 0, 0.5)"; // Red if shadowed
+          } else {
+            ctx.fillStyle = "rgba(51, 51, 51, 0.3)"; // Normal ghost
+          }
+
+          ctx.beginPath();
+          ctx.arc(sx, sy, 12, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
     }
 
     // Draw the dragged dot (semi-transparent)
@@ -1491,7 +1566,7 @@ function getFingerColor(finger) {
 
 function populateTuningSelect(selectedTuning) {
   tuningSelect.innerHTML = "";
-  
+
   // Built-in
   const groupBuiltIn = document.createElement("optgroup");
   groupBuiltIn.label = "Standard / Drop";
@@ -1524,7 +1599,7 @@ function renderStringTunings() {
   // Canvas draws strings 0 to 5 (Low E to High E).
   // Wait, `state.currentTuning` in `builtInTunings` is defined as [E4, B3, G3, D3, A2, E2].
   // This is High E (String 1) to Low E (String 6).
-  // Canvas loop: `for (let i = 0; i < 6; i++)`.
+  // Canvas loop: `for (let i = 0; i < 6; i++`)`.
   // `i=0` is usually Low E (leftmost string).
   // Let's check `drawChord`:
   // `const x = marginX + i * stringSpacing;`
@@ -1543,7 +1618,7 @@ function renderStringTunings() {
     box.className = "string-tuning-box";
     box.textContent = getNoteName(midi);
     box.dataset.stringIndex = index; // 0 = Low E
-    
+
     box.onclick = (e) => {
       showStringTuningSelect(e.target, index, midi);
     };
@@ -1554,20 +1629,23 @@ function renderStringTunings() {
 
 function showStringTuningSelect(target, stringIndex, currentMidi) {
   // Remove existing selects
-  document.querySelectorAll(".string-tuning-select").forEach(el => el.remove());
+  document
+    .querySelectorAll(".string-tuning-select")
+    .forEach((el) => el.remove());
 
   const select = document.createElement("div");
   select.className = "string-tuning-select visible";
-  
+
   // Generate options +/- 12 semitones
-  for (let i = 5; i >= -5; i--) { // High to low
+  for (let i = 5; i >= -5; i--) {
+    // High to low
     const midi = currentMidi + i;
     const div = document.createElement("div");
     div.className = "tuning-option";
     if (i === 0) div.classList.add("current");
-    
+
     div.textContent = getNoteName(midi, state.showOctave);
-    
+
     div.onclick = () => {
       updateSingleString(stringIndex, midi);
       select.remove();
@@ -1577,11 +1655,11 @@ function showStringTuningSelect(target, stringIndex, currentMidi) {
 
   document.body.appendChild(select);
   const rect = target.getBoundingClientRect();
-  
+
   // Center the dropdown relative to the box
   const dropdownWidth = 80; // Approximate min-width
-  const leftPos = rect.left + (rect.width / 2) - (dropdownWidth / 2);
-  
+  const leftPos = rect.left + rect.width / 2 - dropdownWidth / 2;
+
   select.style.top = rect.bottom + 8 + "px";
   select.style.left = leftPos + "px";
 
@@ -1611,16 +1689,16 @@ function updateSingleString(stringIndex, newMidi) {
   // So Low E is index 5 in state.currentTuning.
   const arrayIndex = 5 - stringIndex;
   state.currentTuning[arrayIndex] = newMidi;
-  
+
   // When modifying a string, we are in "unsaved" mode unless we match an existing one
   // But for simplicity, we just set the select to empty or a placeholder if possible
   // Or we can keep the current value but show the "Save" button
-  
+
   // Show Save button
   if (saveTuningBtn) saveTuningBtn.style.display = "inline-flex";
-  
+
   renderStringTunings();
-  
+
   // Re-generate chord data with new tuning
   CHORD_DATA = generateChordData(state.currentTuning);
   applyOverrides(CHORD_DATA);
@@ -1641,10 +1719,10 @@ function updateTuning(value) {
       if (saveTuningBtn) saveTuningBtn.style.display = "none"; // Already saved
     }
   }
-  
+
   localStorage.setItem("guitar_selected_tuning", value);
   renderStringTunings();
-  
+
   // Re-generate chord data
   CHORD_DATA = generateChordData(state.currentTuning);
   applyOverrides(CHORD_DATA);
@@ -1655,9 +1733,11 @@ function updateTuning(value) {
 function initAdvancedSettings() {
   // Re-fetch elements to ensure they exist
   const advancedSettingsBtn = document.getElementById("advancedSettingsBtn");
-  const advancedSettingsContent = document.getElementById("advancedSettingsContent");
+  const advancedSettingsContent = document.getElementById(
+    "advancedSettingsContent"
+  );
   const resetAdvancedBtn = document.getElementById("resetAdvancedBtn");
-  
+
   const advControls = {
     shiftFull: document.getElementById("shiftFull"),
     shiftOctaves: document.getElementById("shiftOctaves"),
@@ -1665,7 +1745,7 @@ function initAdvancedSettings() {
     shiftCents: document.getElementById("shiftCents"),
     formantFull: document.getElementById("formantFull"),
     formantSemitones: document.getElementById("formantSemitones"),
-    formantCents: document.getElementById("formantCents")
+    formantCents: document.getElementById("formantCents"),
   };
 
   const advDisplays = {
@@ -1675,9 +1755,9 @@ function initAdvancedSettings() {
     shiftCents: document.getElementById("shiftCentsVal"),
     formantFull: document.getElementById("formantFullVal"),
     formantSemitones: document.getElementById("formantSemitonesVal"),
-    formantCents: document.getElementById("formantCentsVal")
+    formantCents: document.getElementById("formantCentsVal"),
   };
-  
+
   if (!advancedSettingsBtn || !advancedSettingsContent) {
     console.warn("Advanced settings elements not found");
     return;
@@ -1687,7 +1767,7 @@ function initAdvancedSettings() {
   // Remove existing listeners to avoid duplicates if init is called multiple times
   const newBtn = advancedSettingsBtn.cloneNode(true);
   advancedSettingsBtn.parentNode.replaceChild(newBtn, advancedSettingsBtn);
-  
+
   newBtn.addEventListener("click", (e) => {
     e.preventDefault();
     newBtn.classList.toggle("active");
@@ -1695,7 +1775,7 @@ function initAdvancedSettings() {
   });
 
   // Initialize Sliders
-  Object.keys(advControls).forEach(key => {
+  Object.keys(advControls).forEach((key) => {
     const input = advControls[key];
     const display = advDisplays[key];
     if (!input || !display) return;
@@ -1721,9 +1801,9 @@ function initAdvancedSettings() {
     newResetBtn.addEventListener("click", () => {
       // Reset state
       state.advanced = { ...defaultAdvanced };
-      
+
       // Update UI
-      Object.keys(advControls).forEach(key => {
+      Object.keys(advControls).forEach((key) => {
         const input = advControls[key];
         if (input) {
           input.value = state.advanced[key];
@@ -1743,9 +1823,9 @@ function updateAdvancedDisplay(key, value, displaysMap) {
   } else {
     display = document.getElementById(key + "Val");
   }
-  
+
   if (!display) return;
-  
+
   let unit = "";
   if (key.includes("Octaves")) unit = " oct";
   else if (key.includes("Cents")) unit = " ct";
@@ -1755,7 +1835,10 @@ function updateAdvancedDisplay(key, value, displaysMap) {
 }
 
 function saveAdvancedSettings() {
-  localStorage.setItem("guitar_advanced_settings", JSON.stringify(state.advanced));
+  localStorage.setItem(
+    "guitar_advanced_settings",
+    JSON.stringify(state.advanced)
+  );
 }
 
 // --- Custom Chords & Interaction ---
@@ -1764,27 +1847,34 @@ function initCustomChords() {
   if (saveChordBtn) {
     saveChordBtn.addEventListener("click", () => {
       if (!state.customChord) return;
-      
-      const name = prompt(window.t ? window.t("prompt_chord_name") : "Enter chord name:");
+
+      const name = prompt(
+        window.t ? window.t("prompt_chord_name") : "Enter chord name:"
+      );
       if (name) {
         state.customChords[name] = state.customChord;
-        localStorage.setItem("guitar_custom_chords", JSON.stringify(state.customChords));
+        localStorage.setItem(
+          "guitar_custom_chords",
+          JSON.stringify(state.customChords)
+        );
         alert(window.t ? window.t("msg_chord_saved") : "Chord saved!");
-        
+
         // Exit custom mode? Or stay?
         // Maybe reload to show it in a list?
         // For now, just save.
       }
     });
   }
-  
+
   if (deleteChordBtn) {
     deleteChordBtn.addEventListener("click", () => {
-      if (confirm(window.t ? window.t("confirm_delete_chord") : "Delete chord?")) {
+      if (
+        confirm(window.t ? window.t("confirm_delete_chord") : "Delete chord?")
+      ) {
         state.isCustomMode = false;
         state.customChord = null;
         updateDisplay();
-        
+
         if (saveChordBtn) saveChordBtn.style.display = "none";
         if (deleteChordBtn) deleteChordBtn.style.display = "none";
         if (deleteTuningBtn) deleteTuningBtn.style.display = "inline-flex"; // Restore
@@ -1792,6 +1882,59 @@ function initCustomChords() {
       }
     });
   }
+}
+
+function enterCustomMode() {
+  if (state.isCustomMode) return;
+
+  const variations = getVariations();
+  const currentChord = variations[state.voicingIndex];
+  if (!currentChord) return;
+
+  state.isCustomMode = true;
+  state.customChord = JSON.parse(JSON.stringify(currentChord));
+  state.customChord.fingers = state.customChord.fingers.map(() => 0);
+
+  // Initialize baseFret
+  const frets = state.customChord.frets.filter((f) => f > 0);
+  const minFret = frets.length ? Math.min(...frets) : 0;
+  const maxFret = frets.length ? Math.max(...frets) : 0;
+  state.baseFret = maxFret > 5 ? minFret : 1;
+
+  // Show chord buttons
+  if (saveChordBtn) saveChordBtn.style.display = "inline-flex";
+  if (deleteChordBtn) deleteChordBtn.style.display = "inline-flex";
+  if (deleteTuningBtn) deleteTuningBtn.style.display = "none";
+  if (saveTuningBtn) saveTuningBtn.style.display = "none";
+
+  const chordInfo = document.querySelector(".chord-info");
+  if (chordInfo) chordInfo.style.display = "none";
+
+  const instructions = document.querySelector(".custom-chord-instructions");
+  if (instructions) {
+    instructions.style.display = "block";
+    if (window.t) {
+      instructions.querySelectorAll("[data-i18n]").forEach((el) => {
+        const key = el.getAttribute("data-i18n");
+        el.textContent = window.t(key);
+      });
+    }
+  }
+
+  // Hide voicing controls
+  if (prevBtn) prevBtn.style.display = "none";
+  if (nextBtn) nextBtn.style.display = "none";
+  if (voicingCounter) voicingCounter.style.display = "none";
+
+  // Show Fret Nav
+  const fretNav = document.getElementById("fretNavControls");
+  if (fretNav) {
+    fretNav.style.display = "flex";
+    updateFretNavButtons();
+  }
+
+  const handsIcon = document.querySelector(".hands-icon");
+  if (handsIcon) handsIcon.style.display = "none";
 }
 
 function initCanvasInteractions() {
@@ -1804,81 +1947,62 @@ function initCanvasInteractions() {
     const marginY = 60;
     const stringSpacing = (w - 2 * marginX) / 5;
     const fretSpacing = 50;
-    
+
     let stringIndex = Math.round((x - marginX) / stringSpacing);
     if (stringIndex < 0) stringIndex = 0;
     if (stringIndex > 5) stringIndex = 5;
-    
-    let fret = Math.ceil((y - marginY) / fretSpacing);
+
+    let visualFret = Math.ceil((y - marginY) / fretSpacing);
+    let fret = visualFret;
+
     if (y < marginY) fret = 0; // Open/Mute area
-    // If way above, maybe mute? Let's say y < marginY - 30 is mute
     if (y < marginY - 30) fret = -1;
-    
+
+    // Adjust for baseFret if in custom mode and fret > 0
+    if (state.isCustomMode && state.baseFret > 1 && fret > 0) {
+      fret = visualFret + state.baseFret - 1;
+    }
+
     return { stringIndex, fret, x, y };
   };
 
   canvas.addEventListener("mousedown", (e) => {
     if (e.button !== 0) return; // Only allow left click
     const { stringIndex, fret, x, y } = getCoords(e);
-    
+
     // Check if we are finalizing a barre creation
     if (state.interaction.barreCreating) {
-        const b = state.interaction.barreCreating;
-        // Finalize barre
-        // Use the original fret for the barre
-        const s1 = Math.min(b.startString + 1, stringIndex + 1);
-        const s2 = Math.max(b.startString + 1, stringIndex + 1);
-        
-        state.customChord.bar = {
-            fret: b.fret,
-            finger: 0,
-            strings: [s1, s2]
-        };
-        
-        state.interaction.barreCreating = null;
-        drawChord(state.customChord);
-        return;
+      const b = state.interaction.barreCreating;
+      // Finalize barre
+      // Use the original fret for the barre
+      const s1 = Math.min(b.startString + 1, stringIndex + 1);
+      const s2 = Math.max(b.startString + 1, stringIndex + 1);
+
+      state.customChord.bar = {
+        fret: b.fret,
+        finger: 0,
+        strings: [s1, s2],
+      };
+
+      state.interaction.barreCreating = null;
+      drawChord(state.customChord);
+      updateChordIdentification();
+      return;
     }
-    
+
     // If not in custom mode, enter it
     if (!state.isCustomMode) {
-      const variations = getVariations();
-      const currentChord = variations[state.voicingIndex];
-      if (!currentChord) return;
-      
-      state.isCustomMode = true;
-      state.customChord = JSON.parse(JSON.stringify(currentChord));
-      // Reset fingers to 0 (custom)
-      state.customChord.fingers = state.customChord.fingers.map(() => 0);
-      
-      // Show chord buttons
-      if (saveChordBtn) saveChordBtn.style.display = "inline-flex";
-      if (deleteChordBtn) deleteChordBtn.style.display = "inline-flex";
-      
-      const chordInfo = document.querySelector(".chord-info");
-      if (chordInfo) chordInfo.style.display = "none";
-      
-      const instructions = document.querySelector(".custom-chord-instructions");
-      if (instructions) {
-        instructions.style.display = "block";
-        // Ensure translations are applied if needed (though they should be static or handled by loadTranslations)
-        if (window.t) {
-           instructions.querySelectorAll("[data-i18n]").forEach(el => {
-              const key = el.getAttribute("data-i18n");
-              el.textContent = window.t(key);
-           });
-        }
-      }
+      enterCustomMode();
     }
-    
+
     // Start Dragging
-    state.interaction.dragging = { 
-      stringIndex, 
-      originalFret: state.customChord.frets[stringIndex] 
+    state.interaction.dragging = {
+      stringIndex,
+      originalFret: state.customChord.frets[stringIndex],
     };
     state.interaction.dragPos = { x, y };
     state.interaction.snapFret = fret;
-    
+
     drawChord(state.customChord);
   });
 
@@ -1886,17 +2010,16 @@ function initCanvasInteractions() {
     const { stringIndex, fret, x, y } = getCoords(e);
 
     if (state.interaction.barreCreating) {
-        state.interaction.barreCreating.endString = stringIndex;
-        drawChord(state.customChord);
-        return;
+      state.interaction.barreCreating.endString = stringIndex;
+      drawChord(state.customChord);
+      return;
     }
 
     if (state.interaction.dragging) {
-      
       state.interaction.dragPos = { x, y };
       state.interaction.snapFret = fret;
       state.interaction.snapString = stringIndex;
-      
+
       drawChord(state.customChord);
     }
   });
@@ -1906,16 +2029,16 @@ function initCanvasInteractions() {
     if (state.interaction.dragging) {
       const sourceString = state.interaction.dragging.stringIndex;
       const { stringIndex: targetString, fret: targetFret } = getCoords(e);
-      
+
       // Check if target string is occupied by another note (and not the one we are moving)
       // If targetString == sourceString, we are just moving the note, so no conflict.
       // If targetString != sourceString, we need to check if targetString has a note > 0.
       let conflict = false;
       if (targetString !== sourceString) {
-         const existingFret = state.customChord.frets[targetString];
-         if (existingFret > 0) {
-            conflict = true;
-         }
+        const existingFret = state.customChord.frets[targetString];
+        if (existingFret > 0) {
+          conflict = true;
+        }
       }
 
       if (!conflict) {
@@ -1923,7 +2046,7 @@ function initCanvasInteractions() {
         // Clear source
         state.customChord.frets[sourceString] = 0; // Or keep as is if we want to copy? No, move.
         state.customChord.fingers[sourceString] = 0;
-        
+
         // Set target
         state.customChord.frets[targetString] = targetFret;
         state.customChord.fingers[targetString] = 0;
@@ -1932,30 +2055,20 @@ function initCanvasInteractions() {
         // User said: "No me deberia dejar es poner un punteo donde ya hay uno"
         // So we just don't apply the change. The drag ends, and the note snaps back to original.
       }
-      
+
       // Clear drag state
       state.interaction.dragging = null;
       state.interaction.dragPos = null;
       state.interaction.snapFret = null;
       state.interaction.snapString = null;
-      
+
       drawChord(state.customChord);
-      
-      // Identify Chord
-      const identified = identifyChord(state.customChord.frets);
-      if (identified) {
-         const rootIndex = NOTES_SHARP.indexOf(identified.root);
-         const displayRoot = rootIndex !== -1 ? getNoteName(rootIndex) : identified.root;
-         const displayType = window.t ? window.t("type_" + identified.type) : identified.type;
-         chordNameDisplay.innerHTML = `${displayRoot} ${displayType} <span style="font-size:0.6em; color:#888">${getMsg('label_detected')}</span>`;
-      } else {
-         chordNameDisplay.innerHTML = window.t ? window.t("unknown_chord") : "Unknown chord";
-      }
+
+      updateChordIdentification();
     }
   });
 
   canvas.addEventListener("mouseleave", (e) => {
-
     if (state.interaction.dragging) {
       // Cancel drag or finalize? Let's finalize at last known pos or cancel.
       // Let's cancel for safety or just stop dragging.
@@ -1965,19 +2078,19 @@ function initCanvasInteractions() {
       drawChord(state.customChord);
     }
   });
-  
+
   // Double click for Barre
   canvas.addEventListener("dblclick", (e) => {
-     const { stringIndex, fret } = getCoords(e);
-     if (fret > 0) {
-       // Start barre creation mode
-       state.interaction.barreCreating = {
-           startString: stringIndex,
-           endString: stringIndex,
-           fret: fret
-       };
-       drawChord(state.customChord);
-     }
+    const { stringIndex, fret } = getCoords(e);
+    if (fret > 0) {
+      // Start barre creation mode
+      state.interaction.barreCreating = {
+        startString: stringIndex,
+        endString: stringIndex,
+        fret: fret,
+      };
+      drawChord(state.customChord);
+    }
   });
 
   // Context Menu
@@ -1986,6 +2099,7 @@ function initCanvasInteractions() {
   const ctxRemoveNote = document.getElementById("ctxRemoveNote");
   const ctxOpenString = document.getElementById("ctxOpenString");
   const ctxMuteString = document.getElementById("ctxMuteString");
+  const ctxDisableLogic = document.getElementById("ctxDisableLogic");
 
   // Hide menu on click anywhere
   document.addEventListener("click", () => {
@@ -1994,105 +2108,151 @@ function initCanvasInteractions() {
 
   canvas.addEventListener("contextmenu", (e) => {
     e.preventDefault();
-    
+
     // Ensure we are in custom mode
     if (!state.isCustomMode) {
-      // Trigger custom mode entry logic (same as mousedown)
-      const variations = getVariations();
-      const currentChord = variations[state.voicingIndex];
-      if (!currentChord) return;
-      
-      state.isCustomMode = true;
-      state.customChord = JSON.parse(JSON.stringify(currentChord));
-      state.customChord.fingers = state.customChord.fingers.map(() => 0);
-      
-      if (saveChordBtn) saveChordBtn.style.display = "inline-flex";
-      if (deleteChordBtn) deleteChordBtn.style.display = "inline-flex";
-      if (deleteTuningBtn) deleteTuningBtn.style.display = "none";
-      if (saveTuningBtn) saveTuningBtn.style.display = "none";
-      
-      const chordInfo = document.querySelector(".chord-info");
-      if (chordInfo) chordInfo.style.display = "none";
-      
-      const instructions = document.querySelector(".custom-chord-instructions");
-      if (instructions) {
-        instructions.style.display = "block";
-        if (window.t) {
-           instructions.querySelectorAll("[data-i18n]").forEach(el => {
-              const key = el.getAttribute("data-i18n");
-              el.textContent = window.t(key);
-           });
-        }
-      }
+      enterCustomMode();
     }
 
     const { stringIndex, fret, x, y } = getCoords(e);
-    
+
     // Position menu
     contextMenu.style.display = "block";
     contextMenu.style.left = `${e.pageX}px`;
     contextMenu.style.top = `${e.pageY}px`;
-    
+
     // Determine options based on location
     // Hide all first
     ctxAddNote.style.display = "none";
     ctxRemoveNote.style.display = "none";
     ctxOpenString.style.display = "none";
     ctxMuteString.style.display = "none";
-    
+    if (ctxDisableLogic) ctxDisableLogic.style.display = "none";
+
     const currentFret = state.customChord.frets[stringIndex];
-    
+
     if (fret <= 0) {
-       // Top area (Nut/Open)
-       ctxOpenString.style.display = "flex";
-       ctxMuteString.style.display = "flex";
-       
-       ctxOpenString.onclick = () => {
+      // Top area (Nut/Open)
+      ctxOpenString.style.display = "flex";
+      ctxMuteString.style.display = "flex";
+      if (ctxDisableLogic) ctxDisableLogic.style.display = "flex";
+
+      ctxOpenString.onclick = () => {
+        state.customChord.frets[stringIndex] = -2; // Explicit Open
+        state.customChord.fingers[stringIndex] = 0;
+        drawChord(state.customChord);
+        updateChordIdentification();
+      };
+
+      ctxMuteString.onclick = () => {
+        state.customChord.frets[stringIndex] = -1;
+        state.customChord.fingers[stringIndex] = 0;
+        drawChord(state.customChord);
+        updateChordIdentification();
+      };
+
+      if (ctxDisableLogic) {
+        ctxDisableLogic.onclick = () => {
+          state.customChord.frets[stringIndex] = 0; // Default (Barre applies)
+          state.customChord.fingers[stringIndex] = 0;
+          drawChord(state.customChord);
+          updateChordIdentification();
+        };
+      }
+    } else {
+      // Fretboard area
+      if (currentFret === fret) {
+        // Clicking on existing note
+        ctxRemoveNote.style.display = "flex";
+        ctxRemoveNote.onclick = () => {
+          // Remove note -> Set to Default (0)
           state.customChord.frets[stringIndex] = 0;
           state.customChord.fingers[stringIndex] = 0;
           drawChord(state.customChord);
-       };
-       
-       ctxMuteString.onclick = () => {
-          state.customChord.frets[stringIndex] = -1;
+          updateChordIdentification();
+        };
+      } else {
+        // Clicking on empty spot
+        ctxAddNote.style.display = "flex";
+        ctxAddNote.onclick = () => {
+          state.customChord.frets[stringIndex] = fret;
           state.customChord.fingers[stringIndex] = 0;
           drawChord(state.customChord);
-       };
-       
-    } else {
-       // Fretboard area
-       if (currentFret === fret) {
-          // Clicking on existing note
-          ctxRemoveNote.style.display = "flex";
-          ctxRemoveNote.onclick = () => {
-             // Remove note -> Set to Open (0) or Mute (-1)? 
-             // Usually removing a finger leaves the string open if no barre.
-             // If there is a barre behind it, it should revert to barre note?
-             // But our model is simple: frets array holds the active fret.
-             // If we remove it, let's set to 0 (Open) for now.
-             state.customChord.frets[stringIndex] = 0;
-             state.customChord.fingers[stringIndex] = 0;
-             drawChord(state.customChord);
-          };
-       } else {
-          // Clicking on empty spot
-          ctxAddNote.style.display = "flex";
-          ctxAddNote.onclick = () => {
-             state.customChord.frets[stringIndex] = fret;
-             state.customChord.fingers[stringIndex] = 0;
-             drawChord(state.customChord);
-          };
-       }
+          updateChordIdentification();
+        };
+      }
     }
-    
+
     // Update translations in menu
     if (window.t) {
-       contextMenu.querySelectorAll("[data-i18n]").forEach(el => {
-          const key = el.getAttribute("data-i18n");
-          el.textContent = window.t(key);
-       });
+      contextMenu.querySelectorAll("[data-i18n]").forEach((el) => {
+        const key = el.getAttribute("data-i18n");
+        el.textContent = window.t(key);
+      });
     }
   });
+}
+
+function getEffectiveFrets(chord) {
+  let frets = [...chord.frets];
+  if (chord.bar) {
+    const barFret = chord.bar.fret;
+    // bar.strings are 1-based, e.g. [1, 6]
+    const startStr = Math.min(...chord.bar.strings) - 1;
+    const endStr = Math.max(...chord.bar.strings) - 1;
+
+    for (let i = startStr; i <= endStr; i++) {
+      // Logic:
+      // -1 (Mute): Keep muted.
+      // -2 (Explicit Open): Treat as 0 (Open), ignore barre.
+      // 0 (Default/Empty): Apply barre.
+      // >0 (Fret): If covered by barre, use MAX(fret, barFret).
+
+      if (frets[i] === -1) {
+        // Keep muted
+      } else if (frets[i] === -2) {
+        frets[i] = 0; // Explicit open
+      } else if (frets[i] === 0) {
+        frets[i] = barFret; // Barre takes over
+      } else {
+        // Fret > 0
+        // If fret is lower than barre, barre overrides it (physically)
+        // Unless it's higher pitch? No, higher fret number = higher pitch.
+        // If I press fret 2 and fret 3 (barre), fret 3 sounds.
+        frets[i] = Math.max(frets[i], barFret);
+      }
+    }
+  } else {
+    // No barre, just convert -2 to 0
+    for (let i = 0; i < 6; i++) {
+      if (frets[i] === -2) frets[i] = 0;
+    }
+  }
+  return frets;
+}
+
+function updateChordIdentification() {
+  const effectiveFrets = getEffectiveFrets(state.customChord);
+  const identified = identifyChord(effectiveFrets);
+
+  if (identified) {
+    const rootIndex = NOTES_SHARP.indexOf(identified.root);
+    const displayRoot =
+      rootIndex !== -1 ? getNoteName(rootIndex) : identified.root;
+    const displayType = window.t
+      ? window.t("type_" + identified.type)
+      : identified.type;
+    chordNameDisplay.innerHTML = `${displayRoot} ${displayType} <span style="font-size:0.6em; color:#888">${window.t(
+      "label_detected"
+    )}</span>`;
+  } else {
+    // Try to find a translation for unknown_chord, or default
+    const unknownText = window.t ? window.t("unknown_chord") : "Unknown chord";
+    // If translation returns key (missing), show "Unknown chord"
+    const displayText =
+      unknownText === "unknown_chord" ? "Unknown chord" : unknownText;
+    chordNameDisplay.innerHTML = displayText;
+  }
 }
 
 function identifyChord(frets) {
@@ -2115,4 +2275,31 @@ function arraysEqual(a, b) {
     if (a[i] !== b[i]) return false;
   }
   return true;
+}
+
+function updateFretNavButtons() {
+  const upBtn = document.getElementById("fretUpBtn");
+  const downBtn = document.getElementById("fretDownBtn");
+
+  if (upBtn) {
+    upBtn.disabled = state.baseFret <= 1;
+    upBtn.onclick = () => {
+      if (state.baseFret > 1) {
+        state.baseFret--;
+        drawChord(state.customChord);
+        updateFretNavButtons();
+      }
+    };
+  }
+
+  if (downBtn) {
+    downBtn.disabled = state.baseFret >= 19; // Max fret 24 - 5 visible = 19
+    downBtn.onclick = () => {
+      if (state.baseFret < 19) {
+        state.baseFret++;
+        drawChord(state.customChord);
+        updateFretNavButtons();
+      }
+    };
+  }
 }

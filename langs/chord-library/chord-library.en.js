@@ -98,5 +98,6 @@ window.translations_en = {
   ctx_add_note: "Add note",
   ctx_remove_note: "Remove note",
   ctx_open_string: "Open string",
-  ctx_mute_string: "Mute string"
+  ctx_mute_string: "Mute string",
+  ctx_disable_logic: "Disable logic"
 };
