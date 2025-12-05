@@ -42,6 +42,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     backButton.addEventListener('click', () => {
         playerContainer.style.display = 'none';
         selectionContainer.style.display = 'block';
+        
+        // Clear URL param
+        const url = new URL(window.location);
+        url.searchParams.delete('tab');
+        window.history.pushState({}, '', url);
     });
 
     async function loadTabs() {
@@ -65,6 +70,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             tabsData = loadedTabs.filter(t => t !== null);
             renderAccordion(tabsData);
+
+            // Check for query param
+            const urlParams = new URLSearchParams(window.location.search);
+            const tabParam = urlParams.get('tab');
+            if (tabParam) {
+                const found = tabsData.find(t => t.file === tabParam);
+                if (found) {
+                    playTab(found);
+                }
+            }
         } catch (e) {
             console.error(e);
             selectionContainer.innerHTML = `<div class="error">Error loading tabs. Please ensure tabs/manifest.json exists.</div>`;
@@ -141,6 +156,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         selectionContainer.style.display = 'none';
         playerContainer.style.display = 'flex';
         
+        // Update URL
+        const url = new URL(window.location);
+        url.searchParams.set('tab', tab.file);
+        window.history.pushState({}, '', url);
+
         document.getElementById('current-song-title').textContent = tab.song;
         document.getElementById('current-artist-name').textContent = tab.artist;
 
