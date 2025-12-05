@@ -1,10 +1,17 @@
 /* Visual Tab Specific Styles */
 
+.app {
+  width: 95% !important;
+  margin: 0 2.5% !important;
+  max-width: none !important;
+}
+
 .selection-container {
-  max-width: 800px;
+  max-width: 100%;
   margin: 0 auto;
   padding: 20px;
 }
+
 
 .accordion-item {
   background: var(--card-bg);
@@ -67,7 +74,7 @@
 
 .player-container {
   width: 100%;
-  max-width: 1200px;
+  max-width: 100%;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
