@@ -1,12 +1,12 @@
 window.translations_es = {
-  app_title: "Acordes de Guitarra por Traste",
-  main_title: "Acordes por Traste",
+  app_title: "Acordes de guitarra por traste",
+  main_title: "Acordes por traste",
   subtitle:
     "Elige afinación (incluso personalizada), escribe los trastes y te digo qué acorde es.",
   label_tuning: "Afinación:",
   label_notation: "Notación:",
   label_language: "Idioma:",
-  label_show_octave: "Mostrar Octava",
+  label_show_octave: "Mostrar octava",
   notation_latin: "Latina (Do, Re, Mi...)",
   notation_anglo: "Anglosajona (C, D, E...)",
   label_tuning_name: "Nombre afinación:",
