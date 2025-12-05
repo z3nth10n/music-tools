@@ -356,11 +356,67 @@ document.addEventListener('DOMContentLoaded', async () => {
                         ctx.shadowBlur = 10;
                         ctx.stroke();
                         ctx.shadowBlur = 0;
-                    } else if (char === 'h' || char === 'p' || char === '/') {
-                        ctx.fillStyle = '#aaa';
-                        ctx.font = 'italic 14px Arial';
-                        ctx.textAlign = 'center';
-                        ctx.fillText(char, x, y - 10);
+                    } else if (char.toLowerCase() === 'h' || char.toLowerCase() === 'p') {
+                        // Find previous note index
+                        let prevIndex = -1;
+                        for (let k = i - 1; k >= 0; k--) {
+                            if (!isNaN(parseInt(line[k]))) {
+                                prevIndex = k;
+                                break;
+                            }
+                        }
+
+                        // Find next note index
+                        let nextIndex = -1;
+                        for (let k = i + 1; k < line.length; k++) {
+                            if (!isNaN(parseInt(line[k]))) {
+                                nextIndex = k;
+                                break;
+                            }
+                        }
+
+                        if (prevIndex !== -1 && nextIndex !== -1) {
+                            // Draw Arc (Slur)
+                            ctx.save();
+                            ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+                            ctx.lineWidth = 2;
+                            ctx.setLineDash([4, 4]);
+                            ctx.beginPath();
+                            
+                            const startX = currentX + (prevIndex * FRET_WIDTH);
+                            const endX = currentX + (nextIndex * FRET_WIDTH);
+                            const midX = (startX + endX) / 2;
+                            const noteRadius = 16; // Match the note circle radius
+                            
+                            // Start and end at the top of the note circle to avoid overlapping
+                            ctx.moveTo(startX, y - noteRadius);
+                            
+                            // Curve higher if distance is large
+                            const dist = Math.abs(nextIndex - prevIndex);
+                            const curveHeight = 30 + (dist * 5);
+                            
+                            // Control point needs to be higher than the start/end
+                            ctx.quadraticCurveTo(midX, y - curveHeight, endX, y - noteRadius);
+                            ctx.stroke();
+                            ctx.restore();
+
+                            // Label
+                            ctx.fillStyle = '#fff';
+                            ctx.font = 'bold 14px Arial';
+                            ctx.textAlign = 'center';
+                            // Draw text slightly above the curve peak
+                            ctx.fillText(char.toUpperCase(), midX, y - (curveHeight / 2) - 20);
+                        }
+                    } else if (char === '/') {
+                        // Slide
+                        ctx.save();
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(x - FRET_WIDTH/2, y + 10);
+                        ctx.lineTo(x + FRET_WIDTH/2, y - 10);
+                        ctx.stroke();
+                        ctx.restore();
                     }
                 }
             }
