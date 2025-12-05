@@ -613,11 +613,11 @@ function updateDisplay() {
     });
     
     if (notes.length > 0) {
-      title += ` (${notes.join(" - ")})`;
+      title += `<br><h6 class="subtitle">(${notes.join(" - ")})</h6>`;
     }
   }
 
-  chordNameDisplay.textContent = title;
+  chordNameDisplay.innerHTML = title;
 
   // Update Controls
   voicingCounter.textContent =

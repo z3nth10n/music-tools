@@ -120,10 +120,15 @@
 }
 
 #chordNameDisplay {
+  text-align: center;
   font-size: 2.5rem;
   margin: 0;
   color: var(--primary-color);
   text-shadow: 0 0 20px rgba(108, 92, 231, 0.3);
+}
+
+#chordNameDisplay .subtitle {
+  margin: 0.5em 0;
 }
 
 .voicing-controls {
