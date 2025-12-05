@@ -201,3 +201,14 @@
     flex: 1;
   }
 }
+
+#playChordBtn {
+  color: var(--accent);
+  border-color: var(--accent);
+  font-size: 1.2rem;
+  padding-left: 14px; /* Optical alignment for play icon */
+}
+
+#playChordBtn:hover {
+  background: var(--accent-soft);
+}

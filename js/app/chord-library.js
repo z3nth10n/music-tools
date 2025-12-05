@@ -573,6 +573,10 @@ const langSelect = document.getElementById("langSelect");
 const notationSelect = document.getElementById("notationSelect");
 const tuningSelect = document.getElementById("tuningSelect");
 const showOctaveCb = document.getElementById("showOctaveCb");
+const playChordBtn = document.getElementById("playChordBtn");
+
+// --- Audio Context ---
+let audioCtx;
 
 // --- Initialization ---
 document.addEventListener("DOMContentLoaded", async () => {
@@ -682,8 +686,72 @@ function init() {
     }
   });
 
+  if (playChordBtn) {
+    playChordBtn.addEventListener("click", playCurrentChord);
+  }
+
   // Initial Render
   updateDisplay();
+}
+
+function playCurrentChord() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+
+  if (audioCtx.state === "suspended") {
+    audioCtx.resume();
+  }
+
+  const variations = getVariations();
+  const currentChord = variations[state.voicingIndex];
+  if (!currentChord) return;
+
+  // Standard Tuning MIDI numbers: E2=40, A2=45, D3=50, G3=55, B3=59, E4=64
+  // Note: This assumes standard tuning for now, as the library visualization does.
+  const stringBaseMidi = [40, 45, 50, 55, 59, 64];
+  
+  const now = audioCtx.currentTime;
+  const duration = 2.0; // seconds
+
+  // Strumming effect: slight delay between strings
+  // We strum from low to high strings (index 0 to 5)
+  let noteCount = 0;
+  currentChord.frets.forEach((fret, stringIndex) => {
+    if (fret !== -1) { // Not muted
+      const midiNote = stringBaseMidi[stringIndex] + fret;
+      const frequency = 440 * Math.pow(2, (midiNote - 69) / 12);
+      
+      // Delay increases with string index (downstroke)
+      const delay = stringIndex * 0.05; 
+      playTone(frequency, now, duration, delay);
+      noteCount++;
+    }
+  });
+}
+
+function playTone(freq, startTime, duration, delay) {
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  
+  // Use a mix of triangle and sine for a slightly fuller sound, 
+  // but for simplicity here we use triangle which has some harmonics.
+  osc.type = 'triangle'; 
+  osc.frequency.value = freq;
+  
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  
+  const start = startTime + delay;
+  
+  osc.start(start);
+  
+  // Envelope to simulate plucked string
+  gain.gain.setValueAtTime(0, start);
+  gain.gain.linearRampToValueAtTime(0.2, start + 0.02); // Fast attack
+  gain.gain.exponentialRampToValueAtTime(0.001, start + duration); // Long decay
+  
+  osc.stop(start + duration);
 }
 
 function getNoteName(midiOrPc, withOctave = false) {
