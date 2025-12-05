@@ -2,7 +2,7 @@ window.translations_en = {
   app_title: "Guitar Chord Detector",
   main_title: "Chord Detector",
   subtitle:
-    "Choose tuning (even custom), enter frets and I'll tell you what chord it is.",
+    "Play a note or a guitar chord. The system will try to guess the note, string/fret and, if possible, the chord.",
   label_tuning: "Tuning:",
   label_notation: "Notation:",
   label_language: "Language:",
@@ -20,7 +20,7 @@ window.translations_en = {
   placeholder_fret: "0, 1, 3, x...",
   btn_calc: "Calculate Chord",
   hint_text:
-    "• Leave fret empty or type <strong>x</strong> if string is muted.<br /> • Use numbers <strong>0 to 24</strong> for frets.<br /> • In tuning, click each string to choose the note from a dropdown.<br /> • Enter a name and click <strong>Save Tuning</strong> to save it in the browser.",
+    "Hint: use a <strong>well-tuned guitar</strong>, play cleanly near the mic and avoid background noise.<br>Chord detection is approximate (not as precise as a dedicated plugin).",
   msg_error_data: "Data error",
   msg_no_notes: "No notes",
   tuning_e_std: "E Standard",

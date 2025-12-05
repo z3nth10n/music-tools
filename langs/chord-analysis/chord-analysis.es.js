@@ -2,7 +2,7 @@ window.translations_es = {
   app_title: "Detector de acordes para guitarra",
   main_title: "Detector de acordes",
   subtitle:
-    "Elige afinación (incluso personalizada), escribe los trastes y te digo qué acorde es.",
+    "Toca una nota o un acorde. El sistema intentará adivinar la nota, cuerda/traste y, si es posible, el acorde.",
   label_tuning: "Afinación:",
   label_notation: "Notación:",
   label_language: "Idioma:",
@@ -20,7 +20,7 @@ window.translations_es = {
   placeholder_fret: "0, 1, 3, x... (Trastes)",
   btn_calc: "Calcular acorde",
   hint_text:
-    "• Deja la casilla de traste vacía o escribe <strong>x</strong> si esa cuerda no suena.<br /> • Usa números de <strong>0 a 24</strong> para los trastes.<br /> • En afinación, haz clic en cada cuerda para elegir la nota desde un desplegable.<br /> • Escribe un nombre y pulsa <strong>Guardar afinación</strong> para guardarla en el navegador.",
+    "Consejo: usa una <strong>guitarra bien afinada</strong>, toca limpiamente cerca del micrófono y evita el ruido de fondo.<br>La detección de acordes es aproximada (no tan precisa como un plugin dedicado).",
   msg_error_data: "Error en los datos",
   msg_no_notes: "Sin notas",
   tuning_e_std: "E estándar",
