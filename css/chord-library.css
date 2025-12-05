@@ -212,3 +212,105 @@
 #playChordBtn:hover {
   background: var(--accent-soft);
 }
+
+.string-tunings {
+  display: flex;
+  justify-content: space-between;
+  width: 300px; /* Match canvas width */
+  margin-bottom: 10px;
+  padding: 0 40px; /* Match canvas marginX */
+  box-sizing: border-box;
+}
+
+.string-tuning-box {
+  width: 32px;
+  height: 32px;
+  background: #2d3436;
+  border: 1px solid #636e72;
+  border-radius: 6px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  z-index: 10;
+}
+
+.string-tuning-box:hover {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.string-tuning-select {
+  position: absolute;
+  background: rgba(30, 30, 30, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 4px;
+  z-index: 1000;
+  display: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  max-height: 200px;
+  overflow-y: auto;
+  min-width: 80px;
+}
+
+.string-tuning-select.visible {
+  display: block;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.tuning-option {
+  padding: 8px 12px;
+  cursor: pointer;
+  color: #b2bec3;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  transition: all 0.1s;
+  text-align: center;
+  font-weight: 500;
+}
+
+.tuning-option:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.tuning-option.selected {
+  background: var(--primary-color);
+  color: white;
+}
+  color: white;
+}
+
+.tuning-option.current {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  font-weight: bold;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Scrollbar for the dropdown */
+.string-tuning-select::-webkit-scrollbar {
+  width: 6px;
+}
+
+.string-tuning-select::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.string-tuning-select::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}

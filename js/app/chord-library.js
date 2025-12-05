@@ -381,18 +381,27 @@ const CHORD_SHAPES = {
   ],
 };
 
-function generateChordData() {
+function generateChordData(tuning) {
   const data = {};
+  // Default to E Standard if no tuning provided
+  const currentTuning = tuning || [64, 59, 55, 50, 45, 40]; 
+  // String 6 is index 5 (40 in E Std), String 5 is index 4 (45 in E Std)
+
   NOTES_SHARP.forEach((root, rootIndex) => {
     data[root] = {};
 
     // Calculate root fret on E string (String 6)
-    // E is index 4. Fret = (index - 4 + 12) % 12.
-    let rootFretE = (rootIndex - 4 + 12) % 12;
+    // We need to find the fret that produces the root note on String 6.
+    // String 6 MIDI is currentTuning[5].
+    // rootIndex 0 = C.
+    // We need (stringMidi + fret) % 12 === rootIndex.
+    // fret = (rootIndex - stringMidi % 12 + 12) % 12.
+    const string6Midi = currentTuning[5];
+    let rootFretE = (rootIndex - (string6Midi % 12) + 12) % 12;
 
     // Calculate root fret on A string (String 5)
-    // A is index 9. Fret = (index - 9 + 12) % 12.
-    let rootFretA = (rootIndex - 9 + 12) % 12;
+    const string5Midi = currentTuning[4];
+    let rootFretA = (rootIndex - (string5Midi % 12) + 12) % 12;
 
     for (const [type, shapes] of Object.entries(CHORD_SHAPES)) {
       data[root][type] = [];
@@ -434,7 +443,7 @@ function generateChordData() {
   return data;
 }
 
-const CHORD_DATA = generateChordData();
+let CHORD_DATA = generateChordData();
 
 // Specific open-chord overrides to match provided diagrams
 const CHORD_OVERRIDES = {
@@ -550,12 +559,57 @@ function applyOverrides(data) {
 
 applyOverrides(CHORD_DATA);
 
+// --- Tunings ---
+const builtInTunings = {
+  tuning_e_std: [64, 59, 55, 50, 45, 40], // E4, B3, G3, D3, A2, E2
+  tuning_drop_d: [64, 59, 55, 50, 45, 38], // E4, B3, G3, D3, A2, D2
+  tuning_d_std: [62, 57, 53, 48, 43, 38], // D4, A3, F3, C3, G2, D2
+  tuning_drop_c: [62, 57, 53, 48, 43, 36], // D4, A3, F3, C3, G2, C2
+  tuning_drop_b: [61, 56, 52, 47, 42, 35], // C#4, G#3, E3, B2, F#2, B1
+  tuning_drop_a: [59, 54, 50, 45, 40, 33], // B3, F#3, D3, A2, E2, A1
+  tuning_drop_e: [64, 59, 55, 50, 45, 28], // E4, B3, G3, D3, A2, E1 (Octave down?) - Usually Drop E is for 8 string, or Bass. Assuming user means E Standard but low? Or Drop E on 6 string?
+  // "drop_e" usually means tuning the low string to E1? That's very low.
+  // Maybe they mean "E Standard" is already there.
+  // Let's assume they mean "Drop E" as in E B E G# B E? No, that's Open E.
+  // Drop tunings usually drop the lowest string 1 whole step from standard.
+  // Drop D: D A D G B E (Standard D A D G B E)
+  // Drop C: C G C F A D (D Standard with low C)
+  // Drop B: B F# B E G# C# (C# Standard with low B)
+  // Drop A: A E A D F# B (B Standard with low A)
+  // Drop E? Maybe they mean tuning everything down to E? That's E Standard.
+  // Maybe they mean "Open E"?
+  // I will stick to the ones I know: E Std, Drop D, D Std, Drop C, Drop B, Drop A.
+  // I'll add C Standard, B Standard, A Standard as requested "E/D/C/B/A estandar".
+  tuning_c_std: [60, 55, 51, 46, 41, 36], // C4, G3, Eb3, Bb2, F2, C2
+  tuning_b_std: [59, 54, 50, 45, 40, 35], // B3, F#3, D3, A2, E2, B1
+  tuning_a_std: [57, 52, 48, 43, 38, 33], // A3, E3, C3, G2, D2, A1
+};
+
+let customTunings = {};
+const CUSTOM_TUNINGS_KEY = "guitar_custom_tunings";
+
+function loadCustomTunings() {
+  const raw = localStorage.getItem(CUSTOM_TUNINGS_KEY);
+  if (!raw) return {};
+  try {
+    return JSON.parse(raw);
+  } catch (e) {
+    console.warn("Could not parse custom tunings", e);
+    return {};
+  }
+}
+
+function saveCustomTunings() {
+  localStorage.setItem(CUSTOM_TUNINGS_KEY, JSON.stringify(customTunings));
+}
+
 // --- State ---
 const state = {
   root: "C",
   type: "maj",
   voicingIndex: 0,
   tuning: "standard",
+  currentTuning: [...builtInTunings.tuning_e_std], // Default E Std
   notation: localStorage.getItem("guitar_notation") || "anglo",
   soundProfile: localStorage.getItem("guitar_sound_profile") || "guitar-clean",
   showOctave: false,
@@ -574,6 +628,7 @@ const langSelect = document.getElementById("langSelect");
 const notationSelect = document.getElementById("notationSelect");
 const soundSelect = document.getElementById("soundSelect");
 const tuningSelect = document.getElementById("tuningSelect");
+const stringTuningsContainer = document.getElementById("stringTunings");
 const showOctaveCb = document.getElementById("showOctaveCb");
 const playChordBtn = document.getElementById("playChordBtn");
 
@@ -597,6 +652,8 @@ const AVAILABLE_SAMPLES = {
   80: "G#5.mp3",
   85: "C#6.mp3",
 };
+
+
 
 // --- Initialization ---
 document.addEventListener("DOMContentLoaded", async () => {
@@ -674,6 +731,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       window.loadTranslations(newLang, () => {
         renderRootPicker(); // Re-render to update note names
         renderTypePicker(); // Re-render types to update translations
+        renderStringTunings();
         updateDisplay();
       });
     }
@@ -683,6 +741,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     state.notation = e.target.value;
     localStorage.setItem("guitar_notation", state.notation);
     renderRootPicker();
+    renderStringTunings();
     updateDisplay();
   });
 
@@ -721,6 +780,21 @@ function init() {
   if (playChordBtn) {
     playChordBtn.addEventListener("click", playCurrentChord);
   }
+
+  // Tuning Initialization
+  const savedTuning = localStorage.getItem("guitar_selected_tuning");
+  customTunings = loadCustomTunings();
+  populateTuningSelect(savedTuning || "builtin::tuning_e_std");
+  
+  if (savedTuning) {
+    updateTuning(savedTuning);
+  } else {
+    updateTuning("builtin::tuning_e_std");
+  }
+
+  tuningSelect.addEventListener("change", (e) => {
+    updateTuning(e.target.value);
+  });
 
   // Initial Render
   updateDisplay();
@@ -781,8 +855,12 @@ async function playCurrentChord() {
   const currentChord = variations[state.voicingIndex];
   if (!currentChord) return;
 
-  // Standard Tuning MIDI numbers: E2=40, A2=45, D3=50, G3=55, B3=59, E4=64
-  const stringBaseMidi = [40, 45, 50, 55, 59, 64];
+  // Use current tuning for playback
+  // state.currentTuning is [High E, B, G, D, A, Low E] (Strings 1 to 6)
+  // We need Strings 6 to 1 for the loop below?
+  // currentChord.frets is ordered String 6 to String 1.
+  // So we need [Low E, A, D, G, B, High E].
+  const stringBaseMidi = [...state.currentTuning].reverse();
 
   const now = audioCtx.currentTime;
   const duration = 3.5; // seconds
@@ -954,15 +1032,16 @@ function updateDisplay() {
   let title = `${displayRoot} ${displayType}`;
 
   if (currentChord && state.showOctave) {
-    // Calculate notes with octaves (Standard Tuning: E2, A2, D3, G3, B3, E4)
-    // Strings 6 to 1: [40, 45, 50, 55, 59, 64]
-    const standardTuning = [40, 45, 50, 55, 59, 64];
+    // Calculate notes with octaves
+    // state.currentTuning is [High E, ..., Low E]
+    // We need [Low E, ..., High E] for the loop
+    const currentTuningLowToHigh = [...state.currentTuning].reverse();
     const notes = [];
 
     // currentChord.frets is ordered String 6 to String 1
     currentChord.frets.forEach((fret, index) => {
       if (fret !== -1) {
-        const midi = standardTuning[index] + fret;
+        const midi = currentTuningLowToHigh[index] + fret;
         notes.push(getNoteName(midi, true));
       }
     });
@@ -1138,4 +1217,160 @@ function getFingerColor(finger) {
     default:
       return "#000";
   }
+}
+
+function populateTuningSelect(selectedTuning) {
+  tuningSelect.innerHTML = "";
+  
+  // Built-in
+  const groupBuiltIn = document.createElement("optgroup");
+  groupBuiltIn.label = "Standard / Drop";
+  Object.keys(builtInTunings).forEach((key) => {
+    const opt = document.createElement("option");
+    opt.value = "builtin::" + key;
+    opt.textContent = window.t ? window.t(key) : key;
+    if ("builtin::" + key === selectedTuning) opt.selected = true;
+    groupBuiltIn.appendChild(opt);
+  });
+  tuningSelect.appendChild(groupBuiltIn);
+
+  // Custom
+  const groupCustom = document.createElement("optgroup");
+  groupCustom.label = window.t ? window.t("label_custom_tunings") : "Custom";
+  Object.keys(customTunings).forEach((name) => {
+    const opt = document.createElement("option");
+    opt.value = "custom::" + name;
+    opt.textContent = name;
+    if ("custom::" + name === selectedTuning) opt.selected = true;
+    groupCustom.appendChild(opt);
+  });
+  tuningSelect.appendChild(groupCustom);
+}
+
+function renderStringTunings() {
+  stringTuningsContainer.innerHTML = "";
+  // state.currentTuning is [String 1, String 2, ..., String 6] (High E to Low E)
+  // We want to display them left to right as they appear on canvas (Low E to High E)
+  // Canvas draws strings 0 to 5 (Low E to High E).
+  // Wait, `state.currentTuning` in `builtInTunings` is defined as [E4, B3, G3, D3, A2, E2].
+  // This is High E (String 1) to Low E (String 6).
+  // Canvas loop: `for (let i = 0; i < 6; i++)`.
+  // `i=0` is usually Low E (leftmost string).
+  // Let's check `drawChord`:
+  // `const x = marginX + i * stringSpacing;`
+  // `chord.frets` is ordered String 6 to String 1?
+  // `CHORD_SHAPES`: `offsets: [0, 2, 2, 1, 0, 0]` (E Major).
+  // Index 0 is String 6 (Low E).
+  // So `chord.frets` is [Low E, A, D, G, B, High E].
+  // `state.currentTuning` is [High E, B, G, D, A, Low E].
+  // So we need to reverse `state.currentTuning` to match the canvas order (Low E to High E).
+
+  const tuningLowToHigh = [...state.currentTuning].reverse();
+
+  tuningLowToHigh.forEach((midi, index) => {
+    // index 0 is Low E (String 6)
+    const box = document.createElement("div");
+    box.className = "string-tuning-box";
+    box.textContent = getNoteName(midi);
+    box.dataset.stringIndex = index; // 0 = Low E
+    
+    box.onclick = (e) => {
+      showStringTuningSelect(e.target, index, midi);
+    };
+
+    stringTuningsContainer.appendChild(box);
+  });
+}
+
+function showStringTuningSelect(target, stringIndex, currentMidi) {
+  // Remove existing selects
+  document.querySelectorAll(".string-tuning-select").forEach(el => el.remove());
+
+  const select = document.createElement("div");
+  select.className = "string-tuning-select visible";
+  
+  // Generate options +/- 12 semitones
+  for (let i = 5; i >= -5; i--) { // High to low
+    const midi = currentMidi + i;
+    const div = document.createElement("div");
+    div.className = "tuning-option";
+    if (i === 0) div.classList.add("current");
+    
+    div.textContent = getNoteName(midi, true); // Show octave
+    
+    div.onclick = () => {
+      updateSingleString(stringIndex, midi);
+      select.remove();
+    };
+    select.appendChild(div);
+  }
+
+  document.body.appendChild(select);
+  const rect = target.getBoundingClientRect();
+  
+  // Center the dropdown relative to the box
+  const dropdownWidth = 80; // Approximate min-width
+  const leftPos = rect.left + (rect.width / 2) - (dropdownWidth / 2);
+  
+  select.style.top = rect.bottom + 8 + "px";
+  select.style.left = leftPos + "px";
+
+  // Scroll to current if needed (though with few items it might not be necessary)
+  // But if we add more range later, it's good practice.
+  const currentOption = select.querySelector(".current");
+  if (currentOption) {
+    // Center the current option in the scroll view
+    // select.scrollTop = currentOption.offsetTop - select.clientHeight / 2 + currentOption.clientHeight / 2;
+  }
+
+  // Close on click outside
+  setTimeout(() => {
+    const closeHandler = (e) => {
+      if (!select.contains(e.target) && e.target !== target) {
+        select.remove();
+        document.removeEventListener("click", closeHandler);
+      }
+    };
+    document.addEventListener("click", closeHandler);
+  }, 0);
+}
+
+function updateSingleString(stringIndex, newMidi) {
+  // stringIndex 0 is Low E.
+  // state.currentTuning is [High E, ..., Low E].
+  // So Low E is index 5 in state.currentTuning.
+  const arrayIndex = 5 - stringIndex;
+  state.currentTuning[arrayIndex] = newMidi;
+  
+  // Check if this matches a custom tuning or create new
+  tuningSelect.value = "custom"; // Or handle custom logic
+  
+  // Save as "Custom"
+  // For now, just update state and re-render
+  renderStringTunings();
+  
+  // Re-generate chord data with new tuning
+  CHORD_DATA = generateChordData(state.currentTuning);
+  applyOverrides(CHORD_DATA);
+  updateDisplay();
+}
+
+function updateTuning(value) {
+  if (value.startsWith("builtin::")) {
+    const key = value.split("::")[1];
+    state.currentTuning = [...builtInTunings[key]];
+  } else if (value.startsWith("custom::")) {
+    const key = value.split("::")[1];
+    if (customTunings[key]) {
+      state.currentTuning = [...customTunings[key]];
+    }
+  }
+  
+  localStorage.setItem("guitar_selected_tuning", value);
+  renderStringTunings();
+  
+  // Re-generate chord data
+  CHORD_DATA = generateChordData(state.currentTuning);
+  applyOverrides(CHORD_DATA);
+  updateDisplay();
 }
