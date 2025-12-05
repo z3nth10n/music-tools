@@ -64,7 +64,7 @@ const CHORD_SHAPES = {
       bar: { finger: 1, strings: [1, 5], offset: 0 },
     },
   ],
-  "5": [
+  5: [
     {
       rootString: 6,
       offsets: [0, 2, 2, MUTE, MUTE, MUTE],
@@ -76,7 +76,7 @@ const CHORD_SHAPES = {
       fingers: [0, 1, 3, 4, 0, 0],
     },
   ],
-  "6": [
+  6: [
     {
       rootString: 6,
       offsets: [0, 2, 2, 1, 2, 0],
@@ -90,7 +90,7 @@ const CHORD_SHAPES = {
       bar: { finger: 1, strings: [3, 6], offset: 0 },
     },
   ],
-  "7": [
+  7: [
     {
       rootString: 6,
       offsets: [0, 2, 0, 1, 0, 0],
@@ -118,7 +118,7 @@ const CHORD_SHAPES = {
       bar: { finger: 1, strings: [1, 5], offset: 0 },
     },
   ],
-  "9": [
+  9: [
     {
       rootString: 6,
       offsets: [0, 2, 0, 1, 2, 0],
@@ -139,7 +139,7 @@ const CHORD_SHAPES = {
       fingers: [0, 2, 1, 4, 3, 0],
     },
   ],
-  "11": [
+  11: [
     {
       rootString: 5,
       offsets: [MUTE, 0, 0, 0, 0, 2],
@@ -147,7 +147,7 @@ const CHORD_SHAPES = {
       bar: { finger: 1, strings: [2, 5], offset: 0 },
     },
   ],
-  "13": [
+  13: [
     {
       rootString: 6,
       offsets: [0, MUTE, 0, 1, 2, 2],
@@ -504,7 +504,7 @@ const CHORD_OVERRIDES = {
       bar: { finger: 1, strings: [1, 5], fret: 2 },
     },
   },
-  "7": {
+  7: {
     C: {
       frets: [-1, 3, 2, 3, 1, 0],
       fingers: [0, 3, 2, 4, 1, 0],
@@ -692,7 +692,7 @@ function getNoteName(midiOrPc, withOctave = false) {
   } else {
     name = NOTES_SHARP[pc];
   }
-  
+
   if (withOctave && midiOrPc >= 12) {
     const octave = Math.floor(midiOrPc / 12) - 1;
     return name + octave;
@@ -766,7 +766,7 @@ function updateDisplay() {
     // Strings 6 to 1: [40, 45, 50, 55, 59, 64]
     const standardTuning = [40, 45, 50, 55, 59, 64];
     const notes = [];
-    
+
     // currentChord.frets is ordered String 6 to String 1
     currentChord.frets.forEach((fret, index) => {
       if (fret !== -1) {
@@ -774,7 +774,7 @@ function updateDisplay() {
         notes.push(getNoteName(midi, true));
       }
     });
-    
+
     if (notes.length > 0) {
       title += `<br><h6 class="subtitle">(${notes.join(" - ")})</h6>`;
     }
