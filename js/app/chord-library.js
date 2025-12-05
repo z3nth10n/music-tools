@@ -720,7 +720,7 @@ async function loadGuitarSamples() {
   const promises = Object.entries(AVAILABLE_SAMPLES).map(
     async ([midi, filename]) => {
       try {
-        const response = await fetch(`sounds/${filename}`);
+        const response = await fetch(`sounds/guitar-clean/${filename}`);
         if (response.ok) {
           const arrayBuffer = await response.arrayBuffer();
           window.sampleBuffers[midi] = arrayBuffer;
