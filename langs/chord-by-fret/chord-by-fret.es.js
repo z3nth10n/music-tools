@@ -1,6 +1,6 @@
 window.translations_es = {
-  app_title: "Detector de acordes para guitarra",
-  main_title: "Detector de acordes",
+  app_title: "Acordes de Guitarra por Traste",
+  main_title: "Acordes por Traste",
   subtitle:
     "Elige afinación (incluso personalizada), escribe los trastes y te digo qué acorde es.",
   label_tuning: "Afinación:",

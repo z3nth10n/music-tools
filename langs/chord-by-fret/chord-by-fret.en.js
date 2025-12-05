@@ -1,6 +1,6 @@
 window.translations_en = {
-  app_title: "Guitar Chord Detector",
-  main_title: "Chord Detector",
+  app_title: "Guitar Chord by Fret",
+  main_title: "Chord by Fret",
   subtitle:
     "Choose tuning (even custom), enter frets and I'll tell you what chord it is.",
   label_tuning: "Tuning:",

@@ -1,6 +1,6 @@
 window.translations_es = {
-  app_title: "Detector de acordes para guitarra",
-  main_title: "Detector de acordes",
+  app_title: "Análisis de Acordes de Guitarra",
+  main_title: "Análisis de Acordes",
   subtitle:
     "Toca una nota o un acorde. El sistema intentará adivinar la nota, cuerda/traste y, si es posible, el acorde.",
   label_tuning: "Afinación:",

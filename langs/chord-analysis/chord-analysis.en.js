@@ -1,6 +1,6 @@
 window.translations_en = {
-  app_title: "Guitar Chord Detector",
-  main_title: "Chord Detector",
+  app_title: "Guitar Chord Analysis",
+  main_title: "Chord Analysis",
   subtitle:
     "Play a note or a guitar chord. The system will try to guess the note, string/fret and, if possible, the chord.",
   label_tuning: "Tuning:",
