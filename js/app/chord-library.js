@@ -1000,8 +1000,14 @@ async function playCurrentChord() {
     }
   }
 
-  const variations = getVariations();
-  const currentChord = variations[state.voicingIndex];
+  let currentChord;
+  if (state.isCustomMode && state.customChord) {
+    currentChord = { frets: getEffectiveFrets(state.customChord) };
+  } else {
+    const variations = getVariations();
+    currentChord = variations[state.voicingIndex];
+  }
+
   if (!currentChord) return;
 
   // Use current tuning for playback
