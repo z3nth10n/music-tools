@@ -18,6 +18,8 @@
   <meta property="twitter:description" content="Explore a comprehensive library of guitar chords with finger positions, multiple voicings, and audio playback.">
   <meta property="twitter:image" content="https://z3nth10n.github.io/music-tools/images/thumb.png">
 
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
   <link rel="stylesheet" href="css/shared.css">
   <link rel="stylesheet" href="css/chord-library.css">
 </head>
@@ -180,11 +182,24 @@
       <img src="images/chord-library/hands.png" class="hands-icon" alt="Hands">
       <div class="chord-header">
         <h2 id="chordNameDisplay">C Major</h2>
+        <div class="custom-chord-controls" style="margin-top: 1rem; display: flex; gap: 10px;">
+          <button id="saveChordBtn" class="action-btn" style="display: none;" title="Save Chord">
+            <span class="material-icons">save</span>
+          </button>
+          <button id="deleteChordBtn" class="action-btn delete" style="display: none;" title="Delete Chord">
+            <span class="material-icons">delete</span>
+          </button>
+        </div>
         <div class="voicing-controls">
           <button id="prevVoicing" class="nav-btn">&lt;</button>
           <span id="voicingCounter">1 / 3</span>
           <button id="nextVoicing" class="nav-btn">&gt;</button>
-          <button id="playChordBtn" class="nav-btn" title="Play Chord" style="margin-left: 10px;">▶</button>
+                <button id="playChordBtn" class="play-btn">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M8 5v14l11-7z"/>
+        </svg>
+      </button>
+    </div>
         </div>
       </div>
 
@@ -203,8 +218,32 @@
           <div class="legend-item"><span class="dot finger-4"></span> <span data-i18n="finger_pinky">Pinky</span></div>
         </div>
       </div>
+
+      <div class="custom-chord-instructions" style="display: none; text-align: center; margin-top: 10px; color: white; font-size: 0.9em;">
+        <div style="margin-bottom: 5px; display: flex; align-items: center; justify-content: center; gap: 5px;">
+          <span class="material-icons" style="font-size: 1.2em;">touch_app</span> 
+          <span data-i18n="instr_drag_note">Drag to move notes</span>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 5px;">
+          <span class="material-icons" style="font-size: 1.2em;">mouse</span> 
+          <span data-i18n="instr_barre">Double click to create barre</span>
+        </div>
+        <div style="margin-top: 5px; display: flex; align-items: center; justify-content: center; gap: 5px;">
+          <span class="material-icons" style="font-size: 1.2em;">more_vert</span> 
+          <span data-i18n="instr_context_menu">Right click for more options</span>
+        </div>
+      </div>
     </div>
 
+    </div>
+  </div>
+
+  <!-- Context Menu -->
+  <div id="chordContextMenu" class="context-menu" style="display: none;">
+    <div class="menu-item" id="ctxAddNote"><span class="material-icons">add_circle</span> <span data-i18n="ctx_add_note">Add note</span></div>
+    <div class="menu-item" id="ctxRemoveNote"><span class="material-icons" style=" color: #ff5252;">remove_circle</span> <span data-i18n="ctx_remove_note">Remove note</span></div>
+    <div class="menu-item" id="ctxOpenString"><span class="material-icons">radio_button_unchecked</span> <span data-i18n="ctx_open_string">Open string</span></div>
+    <div class="menu-item" id="ctxMuteString"><span class="material-icons">close</span> <span data-i18n="ctx_mute_string">Mute string</span></div>
   </div>
 
   <script src="js/shared/langs.js"></script>

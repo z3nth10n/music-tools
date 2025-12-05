@@ -24,6 +24,7 @@ window.translations_en = {
   tuning_b_std: "B standard",
   tuning_a_std: "A standard",
   label_show_octave: "Show octave",
+  label_detected: "(Detected)",
   btn_back: "Back",
   label_root: "Root",
   label_type: "Type",
@@ -76,4 +77,26 @@ window.translations_en = {
   formant_semitones: "Formant (semitones)",
   formant_cents: "Formant (cents)",
   btn_reset_defaults: "Reset defaults",
+  
+  // Custom Chords
+  btn_save_chord: "Save chord",
+  btn_delete_chord: "Delete chord",
+  prompt_chord_name: "Enter chord name:",
+  confirm_delete_chord: "Are you sure you want to delete this chord?",
+  label_custom_chords: "My chords",
+  msg_chord_saved: "Chord saved!",
+  msg_chord_deleted: "Chord deleted!",
+
+  // Instructions
+  instr_drag_note: "Drag to move notes",
+  instr_barre: "Double click to create barre",
+  instr_barre_finish: "Click to finish barre",
+  instr_context_menu: "Right click for more options",
+  unknown_chord: "Unknown chord",
+
+  // Context Menu
+  ctx_add_note: "Add note",
+  ctx_remove_note: "Remove note",
+  ctx_open_string: "Open string",
+  ctx_mute_string: "Mute string"
 };

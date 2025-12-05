@@ -24,6 +24,7 @@ window.translations_es = {
   tuning_b_std: "B estándar",
   tuning_a_std: "A estándar",
   label_show_octave: "Mostrar octava",
+  label_detected: "(Detectado)",
   btn_back: "Volver",
   label_root: "Tónica",
   label_type: "Tipo",
@@ -76,4 +77,26 @@ window.translations_es = {
   formant_semitones: "Formante (semitonos)",
   formant_cents: "Formante (centésimas)",
   btn_reset_defaults: "Restablecer valores",
+
+  // Custom Chords
+  btn_save_chord: "Guardar acorde",
+  btn_delete_chord: "Eliminar acorde",
+  prompt_chord_name: "Introduce el nombre del acorde:",
+  confirm_delete_chord: "¿Estás seguro de que quieres eliminar este acorde?",
+  label_custom_chords: "Mis acordes",
+  msg_chord_saved: "¡Acorde guardado!",
+  msg_chord_deleted: "¡Acorde eliminado!",
+  
+  // Instructions
+  instr_drag_note: "Arrastra para mover notas",
+  instr_barre: "Doble clic para crear cejilla",
+  instr_barre_finish: "Clic para finalizar cejilla",
+  instr_context_menu: "Clic derecho para más opciones",
+  unknown_chord: "Acorde desconocido",
+  
+  // Context Menu
+  ctx_add_note: "Añadir nota",
+  ctx_remove_note: "Quitar nota",
+  ctx_open_string: "Cuerda al aire",
+  ctx_mute_string: "Mutear cuerda"
 };
