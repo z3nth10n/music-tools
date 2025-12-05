@@ -6,7 +6,7 @@ chord-library
 * [Ok] Add a play button to reproduce sound inside the chord-library (also, the sound should be a guitar sample)
 * [Ok] Allow saving those custom chords
 * [Ok] Allow setting the tuning for each string individually, and also loading and saving established tunings (Standard E, Drop B, etc.) or custom tunings
-* Allow moving the buttons inside the canvas to create custom chords
+* [Ok] Allow moving the buttons inside the canvas to create custom chords
 
 chord-analysis
 
