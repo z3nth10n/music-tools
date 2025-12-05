@@ -45,90 +45,63 @@ const NOTES_LATIN = [
 ];
 
 // Finger mapping: 1=Index (Yellow), 2=Middle (Purple), 3=Ring (Blue), 4=Pinky (Orange)
-// Frets: -1 = Muted (x), 0 = Open (o), >0 = Fret number
+// Frets: "x" = Muted (x), 0 = Open (o), >0 = Fret number
+const MUTE = "x";
 
 // --- Chord Shapes Definition ---
 const CHORD_SHAPES = {
-  Major: [
+  maj: [
     {
       rootString: 6,
       offsets: [0, 2, 2, 1, 0, 0],
       fingers: [1, 3, 4, 2, 1, 1],
-      bar: { finger: 1, strings: [1, 6] },
+      bar: { finger: 1, strings: [1, 6], offset: 0 },
     },
     {
       rootString: 5,
-      offsets: [-1, 0, 2, 2, 2, 0],
-      fingers: [0, 1, 2, 3, 4, 1],
-      bar: { finger: 1, strings: [1, 5] },
-    },
-  ],
-  Minor: [
-    {
-      rootString: 6,
-      offsets: [0, 2, 2, 0, 0, 0],
-      fingers: [1, 3, 4, 1, 1, 1],
-      bar: { finger: 1, strings: [1, 6] },
-    },
-    {
-      rootString: 5,
-      offsets: [-1, 0, 2, 2, 1, 0],
+      offsets: [MUTE, 0, 2, 2, 2, 0],
       fingers: [0, 1, 3, 4, 2, 1],
-      bar: { finger: 1, strings: [1, 5] },
+      bar: { finger: 1, strings: [1, 5], offset: 0 },
     },
   ],
-  7: [
+  "5": [
     {
       rootString: 6,
-      offsets: [0, 2, 0, 1, 0, 0],
-      fingers: [1, 3, 1, 2, 1, 1],
-      bar: { finger: 1, strings: [1, 6] },
-    },
-    {
-      rootString: 5,
-      offsets: [-1, 0, 2, 0, 2, 0],
-      fingers: [0, 1, 3, 1, 4, 1],
-      bar: { finger: 1, strings: [1, 5] },
-    },
-  ],
-  5: [
-    {
-      rootString: 6,
-      offsets: [0, 2, 2, -1, -1, -1],
+      offsets: [0, 2, 2, MUTE, MUTE, MUTE],
       fingers: [1, 3, 4, 0, 0, 0],
     },
     {
       rootString: 5,
-      offsets: [-1, 0, 2, 2, -1, -1],
+      offsets: [MUTE, 0, 2, 2, MUTE, MUTE],
       fingers: [0, 1, 3, 4, 0, 0],
     },
   ],
-  6: [
+  "6": [
     {
       rootString: 6,
       offsets: [0, 2, 2, 1, 2, 0],
       fingers: [1, 3, 4, 2, 4, 1],
-      bar: { finger: 1, strings: [1, 6] },
+      bar: { finger: 1, strings: [1, 6], offset: 0 },
     },
     {
       rootString: 5,
-      offsets: [-1, 0, 2, 2, 2, 2],
-      fingers: [0, 1, 2, 2, 2, 2],
-      bar: { finger: 1, strings: [1, 5] },
+      offsets: [MUTE, 0, 2, 2, 2, 2],
+      fingers: [0, 2, 3, 4, 1, 1],
+      bar: { finger: 1, strings: [3, 6], offset: 0 },
     },
   ],
-  m6: [
+  "7": [
     {
       rootString: 6,
-      offsets: [0, 2, 2, 0, 2, 0],
-      fingers: [1, 3, 4, 1, 4, 1],
-      bar: { finger: 1, strings: [1, 6] },
+      offsets: [0, 2, 0, 1, 0, 0],
+      fingers: [1, 3, 1, 2, 1, 1],
+      bar: { finger: 1, strings: [1, 6], offset: 0 },
     },
     {
       rootString: 5,
-      offsets: [-1, 0, 2, 2, 1, 2],
-      fingers: [0, 1, 3, 4, 2, 4],
-      bar: { finger: 1, strings: [1, 5] },
+      offsets: [MUTE, 0, 2, 0, 2, 0],
+      fingers: [0, 1, 3, 1, 4, 1],
+      bar: { finger: 1, strings: [1, 5], offset: 0 },
     },
   ],
   maj7: [
@@ -136,13 +109,83 @@ const CHORD_SHAPES = {
       rootString: 6,
       offsets: [0, 2, 1, 1, 0, 0],
       fingers: [1, 3, 2, 4, 1, 1],
-      bar: { finger: 1, strings: [1, 6] },
+      bar: { finger: 1, strings: [1, 6], offset: 0 },
     },
     {
       rootString: 5,
-      offsets: [-1, 0, 2, 1, 2, 0],
+      offsets: [MUTE, 0, 2, 1, 2, 0],
       fingers: [0, 1, 3, 2, 4, 1],
-      bar: { finger: 1, strings: [1, 5] },
+      bar: { finger: 1, strings: [1, 5], offset: 0 },
+    },
+  ],
+  "9": [
+    {
+      rootString: 6,
+      offsets: [0, 2, 0, 1, 2, 0],
+      fingers: [1, 3, 1, 2, 4, 1],
+      bar: { finger: 1, strings: [1, 6], offset: 0 },
+    },
+  ],
+  maj9: [
+    {
+      rootString: 6,
+      offsets: [0, 2, 1, 1, 0, 2],
+      fingers: [1, 3, 2, 4, 1, 4],
+      bar: { finger: 1, strings: [1, 5], offset: 0 },
+    },
+    {
+      rootString: 5,
+      offsets: [MUTE, 0, -1, 1, 0, MUTE],
+      fingers: [0, 2, 1, 4, 3, 0],
+    },
+  ],
+  "11": [
+    {
+      rootString: 5,
+      offsets: [MUTE, 0, 0, 0, 0, 2],
+      fingers: [0, 1, 1, 1, 1, 4],
+      bar: { finger: 1, strings: [2, 5], offset: 0 },
+    },
+  ],
+  "13": [
+    {
+      rootString: 6,
+      offsets: [0, MUTE, 0, 1, 2, 2],
+      fingers: [1, 0, 2, 3, 4, 4],
+    },
+  ],
+  maj13: [
+    {
+      rootString: 6,
+      offsets: [0, MUTE, 1, 1, 2, 2],
+      fingers: [1, 0, 2, 3, 4, 4],
+    },
+  ],
+  min: [
+    {
+      rootString: 6,
+      offsets: [0, 2, 2, 0, 0, 0],
+      fingers: [1, 3, 4, 1, 1, 1],
+      bar: { finger: 1, strings: [1, 6], offset: 0 },
+    },
+    {
+      rootString: 5,
+      offsets: [MUTE, 0, 2, 2, 1, 0],
+      fingers: [0, 1, 3, 4, 2, 1],
+      bar: { finger: 1, strings: [1, 5], offset: 0 },
+    },
+  ],
+  m6: [
+    {
+      rootString: 6,
+      offsets: [0, 2, 2, 0, 2, 0],
+      fingers: [1, 3, 4, 1, 4, 1],
+      bar: { finger: 1, strings: [1, 6], offset: 0 },
+    },
+    {
+      rootString: 5,
+      offsets: [MUTE, 0, 2, 2, 1, 2],
+      fingers: [0, 2, 3, 4, 1, 4],
     },
   ],
   m7: [
@@ -150,122 +193,63 @@ const CHORD_SHAPES = {
       rootString: 6,
       offsets: [0, 2, 0, 0, 0, 0],
       fingers: [1, 3, 1, 1, 1, 1],
-      bar: { finger: 1, strings: [1, 6] },
+      bar: { finger: 1, strings: [1, 6], offset: 0 },
     },
     {
       rootString: 5,
-      offsets: [-1, 0, 2, 0, 1, 0],
+      offsets: [MUTE, 0, 2, 0, 1, 0],
       fingers: [0, 1, 3, 1, 2, 1],
-      bar: { finger: 1, strings: [1, 5] },
-    },
-  ],
-  m7b5: [
-    {
-      rootString: 6,
-      offsets: [0, 1, 2, 0, 3, -1],
-      fingers: [1, 2, 4, 1, 4, 0],
-      bar: { finger: 1, strings: [1, 6] },
-    },
-    {
-      rootString: 5,
-      offsets: [-1, 0, 1, 0, 1, -1],
-      fingers: [0, 1, 2, 1, 3, 0],
-      bar: { finger: 1, strings: [2, 4] },
-    },
-  ],
-  dim7: [
-    {
-      rootString: 6,
-      offsets: [0, -1, -1, -1, -1, -1],
-      fingers: [1, 0, 0, 0, 0, 0],
-    },
-    {
-      rootString: 5,
-      offsets: [-1, 0, 1, -1, 1, -1],
-      fingers: [0, 2, 3, 1, 4, 0],
-    },
-  ],
-  "m(maj7)": [
-    {
-      rootString: 5,
-      offsets: [-1, 0, 2, 1, 1, 0],
-      fingers: [0, 1, 3, 2, 2, 1],
-      bar: { finger: 1, strings: [1, 5] },
-    },
-  ],
-  9: [
-    {
-      rootString: 5,
-      offsets: [-1, 0, -1, 0, 0, 0],
-      fingers: [0, 2, 1, 3, 3, 3],
-      bar: { finger: 3, strings: [1, 3] },
-    },
-  ],
-  maj9: [
-    {
-      rootString: 5,
-      offsets: [-1, 0, -1, 1, 0, -1],
-      fingers: [0, 2, 1, 4, 3, 0],
+      bar: { finger: 1, strings: [1, 5], offset: 0 },
     },
   ],
   m9: [
     {
-      rootString: 5,
-      offsets: [-1, 0, -2, 0, 0, -1],
-      fingers: [0, 2, 1, 3, 3, 0],
-    },
-  ],
-  11: [
-    {
       rootString: 6,
-      offsets: [0, 0, 0, 0, 0, 0],
-      fingers: [1, 1, 1, 1, 1, 1],
-      bar: { finger: 1, strings: [1, 6] },
+      offsets: [0, 2, 0, 0, 0, 2],
+      fingers: [2, 4, 1, 1, 1, 3],
+      bar: { finger: 1, strings: [3, 5], offset: 0 },
+    },
+    {
+      rootString: 5,
+      offsets: [MUTE, 0, -2, 0, 0, MUTE],
+      fingers: [0, 2, 1, 3, 3, 0],
     },
   ],
   m11: [
     {
-      rootString: 6,
-      offsets: [0, 2, 0, 0, 0, 0],
-      fingers: [1, 3, 1, 1, 1, 1],
-      bar: { finger: 1, strings: [1, 6] },
-    },
-  ],
-  13: [
-    {
-      rootString: 6,
-      offsets: [0, -1, 0, 1, 2, 2],
-      fingers: [1, 0, 2, 3, 4, 4],
-    },
-  ],
-  maj13: [
-    {
-      rootString: 6,
-      offsets: [0, -1, 1, 1, 2, -1],
-      fingers: [1, 0, 2, 3, 4, 0],
+      rootString: 5,
+      offsets: [MUTE, 0, -2, 0, 0, -2],
+      fingers: [0, 2, 1, 3, 3, 1],
+      bar: { finger: 1, strings: [5, 6], offset: -2 },
     },
   ],
   m13: [
     {
       rootString: 6,
-      offsets: [0, -1, 0, 0, 2, -1],
-      fingers: [1, 0, 2, 2, 4, 0],
+      offsets: [0, MUTE, 0, 0, 2, 2],
+      fingers: [1, 0, 2, 2, 4, 4],
     },
   ],
-  "6/9": [
+  "m(maj7)": [
+    {
+      rootString: 6,
+      offsets: [0, 2, 0, 1, 1, 0],
+      fingers: [1, 3, 1, 2, 2, 1],
+      bar: { finger: 1, strings: [1, 6], offset: 0 },
+    },
     {
       rootString: 5,
-      offsets: [-1, 0, -1, -1, 0, 0],
-      fingers: [0, 2, 1, 1, 3, 4],
-      bar: { finger: 1, strings: [3, 4] },
+      offsets: [MUTE, 0, 2, 1, 1, 0],
+      fingers: [0, 1, 3, 2, 2, 1],
+      bar: { finger: 1, strings: [1, 5], offset: 0 },
     },
   ],
   sus2: [
     {
       rootString: 5,
-      offsets: [-1, 0, 2, 2, 0, 0],
+      offsets: [MUTE, 0, 2, 2, 0, 0],
       fingers: [0, 1, 3, 4, 1, 1],
-      bar: { finger: 1, strings: [1, 5] },
+      bar: { finger: 1, strings: [1, 5], offset: 0 },
     },
   ],
   sus4: [
@@ -273,13 +257,59 @@ const CHORD_SHAPES = {
       rootString: 6,
       offsets: [0, 2, 2, 2, 0, 0],
       fingers: [1, 3, 4, 4, 1, 1],
-      bar: { finger: 1, strings: [1, 6] },
+      bar: { finger: 1, strings: [1, 6], offset: 0 },
     },
     {
       rootString: 5,
-      offsets: [-1, 0, 2, 2, 3, 0],
+      offsets: [MUTE, 0, 2, 2, 3, 0],
       fingers: [0, 1, 2, 3, 4, 1],
-      bar: { finger: 1, strings: [1, 5] },
+      bar: { finger: 1, strings: [1, 5], offset: 0 },
+    },
+  ],
+  dim: [
+    {
+      rootString: 6,
+      offsets: [0, 1, 2, 0, 2, 0],
+      fingers: [1, 2, 4, 1, 3, 1],
+    },
+    {
+      rootString: 5,
+      offsets: [MUTE, 0, 1, 2, 1, MUTE],
+      fingers: [0, 1, 2, 4, 3, 0],
+    },
+  ],
+  dim7: [
+    {
+      rootString: 6,
+      offsets: [0, 1, -1, 1, -1, 0],
+      fingers: [2, 3, 1, 4, 1, 2],
+      bar: { finger: 1, strings: [3, 5], offset: -1 },
+    },
+    {
+      rootString: 5,
+      offsets: [MUTE, 0, 1, -1, 1, -1],
+      fingers: [0, 2, 3, 1, 4, 1],
+      bar: { finger: 1, strings: [4, 6], offset: -1 },
+    },
+  ],
+  aug: [
+    {
+      rootString: 6,
+      offsets: [0, MUTE, 2, 1, 1, MUTE],
+      fingers: [1, 0, 4, 3, 2, 0],
+    },
+    {
+      rootString: 5,
+      offsets: [MUTE, 0, 3, 2, 2, MUTE],
+      fingers: [0, 1, 4, 3, 3, 0],
+    },
+  ],
+  "6/9": [
+    {
+      rootString: 5,
+      offsets: [MUTE, 0, -1, -1, 0, 0],
+      fingers: [0, 2, 1, 1, 3, 4],
+      bar: { finger: 1, strings: [3, 4], offset: -1 },
     },
   ],
   "7sus4": [
@@ -287,56 +317,66 @@ const CHORD_SHAPES = {
       rootString: 6,
       offsets: [0, 2, 0, 2, 0, 0],
       fingers: [1, 3, 1, 4, 1, 1],
-      bar: { finger: 1, strings: [1, 6] },
+      bar: { finger: 1, strings: [1, 6], offset: 0 },
     },
     {
       rootString: 5,
-      offsets: [-1, 0, 2, 0, 3, 0],
+      offsets: [MUTE, 0, 2, 0, 3, 0],
       fingers: [0, 1, 2, 1, 4, 1],
-      bar: { finger: 1, strings: [1, 5] },
+      bar: { finger: 1, strings: [1, 5], offset: 0 },
     },
   ],
   "7b5": [
     {
       rootString: 6,
-      offsets: [0, -1, 0, 1, -1, -1],
-      fingers: [2, 0, 3, 4, 0, 0],
+      offsets: [0, MUTE, 0, 1, -1, MUTE],
+      fingers: [2, 0, 3, 4, 1, 0],
+      bar: { finger: 1, strings: [5, 5], offset: -1 },
     },
   ],
   "7b9": [
     {
       rootString: 5,
-      offsets: [-1, 0, -1, 0, -1, -1],
-      fingers: [0, 2, 1, 3, 1, 0],
+      offsets: [MUTE, 0, -1, 0, -1, 0],
+      fingers: [0, 2, 1, 3, 1, 4],
+      bar: { finger: 1, strings: [5, 5], offset: -1 },
     },
   ],
   "9sus4": [
     {
       rootString: 5,
-      offsets: [-1, 0, 0, 0, 0, 0],
+      offsets: [MUTE, 0, 0, 0, 0, 0],
       fingers: [0, 1, 1, 1, 1, 1],
-      bar: { finger: 1, strings: [1, 5] },
+      bar: { finger: 1, strings: [1, 5], offset: 0 },
     },
   ],
   add9: [
     {
-      rootString: 6,
-      offsets: [0, 2, 4, 1, 0, 0],
-      fingers: [1, 2, 4, 1, 1, 1],
-      bar: { finger: 1, strings: [1, 6] },
-    },
-    {
       rootString: 5,
-      offsets: [-1, 0, 2, 2, 0, 0],
-      fingers: [0, 1, 3, 4, 1, 1],
-      bar: { finger: 1, strings: [1, 5] },
+      offsets: [MUTE, 0, -1, -3, 0, 0],
+      fingers: [0, 2, 1, 3, 4, 4],
+      bar: { finger: 1, strings: [5, 6], offset: -1 },
     },
   ],
   aug9: [
     {
       rootString: 5,
-      offsets: [-1, 0, -1, 0, 1, -1],
+      offsets: [MUTE, 0, -1, 0, 1, MUTE],
       fingers: [0, 2, 1, 3, 4, 0],
+    },
+  ],
+  m7b5: [
+    {
+      rootString: 6,
+      offsets: [0, 1, 0, 0, 1, MUTE],
+      fingers: [1, 2, 1, 1, 3, 0],
+      bar: { finger: 1, strings: [1, 4], offset: 0 },
+    },
+    {
+      rootString: 5,
+      offsets: [MUTE, 0, 1, 0, 1, MUTE],
+      fingers: [0, 1, 2, 1, 3, 0],
+      bar: { finger: 1, strings: [2, 4], offset: 0 },
     },
   ],
 };
@@ -362,20 +402,31 @@ function generateChordData() {
         if (shape.rootString === 6) baseFret = rootFretE;
         if (shape.rootString === 5) baseFret = rootFretA;
 
+        let invalid = false;
         const frets = shape.offsets.map((offset) => {
-          if (offset === -1) return -1;
-          return baseFret + offset;
+          if (offset === MUTE) return -1;
+          const fret = baseFret + offset;
+          if (fret < 0) invalid = true;
+          return fret;
         });
+
+        if (invalid) return;
 
         let bar = null;
         if (shape.bar) {
-          bar = { ...shape.bar, fret: baseFret };
+          const barFret = baseFret + (shape.bar.offset ?? 0);
+          if (barFret < 0) return;
+          bar = {
+            finger: shape.bar.finger,
+            strings: shape.bar.strings,
+            fret: barFret,
+          };
         }
 
         data[root][type].push({
-          frets: frets,
+          frets,
           fingers: shape.fingers,
-          bar: bar,
+          bar,
         });
       });
     }
@@ -385,10 +436,122 @@ function generateChordData() {
 
 const CHORD_DATA = generateChordData();
 
+// Specific open-chord overrides to match provided diagrams
+const CHORD_OVERRIDES = {
+  maj: {
+    C: {
+      frets: [-1, 3, 2, 0, 1, 0],
+      fingers: [0, 3, 2, 0, 1, 0],
+    },
+    G: {
+      frets: [3, 2, 0, 0, 3, 3],
+      fingers: [2, 1, 0, 0, 3, 4],
+    },
+    D: {
+      frets: [-1, -1, 0, 2, 3, 2],
+      fingers: [0, 0, 0, 1, 3, 2],
+    },
+    A: {
+      frets: [-1, 0, 2, 2, 2, 0],
+      fingers: [0, 0, 1, 2, 3, 0],
+    },
+    E: {
+      frets: [0, 2, 2, 1, 0, 0],
+      fingers: [0, 2, 3, 1, 0, 0],
+    },
+    F: {
+      frets: [1, 3, 3, 2, 1, 1],
+      fingers: [1, 3, 4, 2, 1, 1],
+      bar: { finger: 1, strings: [1, 6], fret: 1 },
+    },
+    B: {
+      frets: [-1, 2, 4, 4, 4, 2],
+      fingers: [0, 1, 3, 4, 4, 1],
+      bar: { finger: 1, strings: [1, 5], fret: 2 },
+    },
+  },
+  min: {
+    C: {
+      frets: [-1, 3, 5, 5, 4, 3],
+      fingers: [0, 1, 3, 4, 2, 1],
+      bar: { finger: 1, strings: [1, 5], fret: 3 },
+    },
+    G: {
+      frets: [3, 5, 5, 3, 3, 3],
+      fingers: [1, 3, 4, 1, 1, 1],
+      bar: { finger: 1, strings: [1, 6], fret: 3 },
+    },
+    D: {
+      frets: [-1, -1, 0, 2, 3, 1],
+      fingers: [0, 0, 0, 2, 3, 1],
+    },
+    A: {
+      frets: [-1, 0, 2, 2, 1, 0],
+      fingers: [0, 0, 2, 3, 1, 0],
+    },
+    E: {
+      frets: [0, 2, 2, 0, 0, 0],
+      fingers: [0, 2, 3, 0, 0, 0],
+    },
+    F: {
+      frets: [1, 3, 3, 1, 1, 1],
+      fingers: [1, 3, 4, 1, 1, 1],
+      bar: { finger: 1, strings: [1, 6], fret: 1 },
+    },
+    B: {
+      frets: [-1, 2, 4, 4, 3, 2],
+      fingers: [0, 1, 3, 4, 2, 1],
+      bar: { finger: 1, strings: [1, 5], fret: 2 },
+    },
+  },
+  "7": {
+    C: {
+      frets: [-1, 3, 2, 3, 1, 0],
+      fingers: [0, 3, 2, 4, 1, 0],
+    },
+    G: {
+      frets: [3, 2, 0, 0, 0, 1],
+      fingers: [2, 1, 0, 0, 0, 3],
+    },
+    D: {
+      frets: [-1, -1, 0, 2, 1, 2],
+      fingers: [0, 0, 0, 2, 1, 3],
+    },
+    A: {
+      frets: [-1, 0, 2, 0, 2, 0],
+      fingers: [0, 0, 2, 0, 1, 0],
+    },
+    E: {
+      frets: [0, 2, 0, 1, 0, 0],
+      fingers: [0, 2, 0, 1, 0, 0],
+    },
+    F: {
+      frets: [1, 3, 1, 2, 1, 1],
+      fingers: [1, 3, 1, 2, 1, 1],
+      bar: { finger: 1, strings: [1, 6], fret: 1 },
+    },
+    B: {
+      frets: [-1, 2, 1, 2, 0, 2],
+      fingers: [0, 2, 1, 3, 0, 4],
+    },
+  },
+};
+
+function applyOverrides(data) {
+  Object.entries(CHORD_OVERRIDES).forEach(([type, chords]) => {
+    Object.entries(chords).forEach(([root, shape]) => {
+      if (!data[root]) data[root] = {};
+      data[root][type] = [shape];
+    });
+  });
+}
+
+applyOverrides(CHORD_DATA);
+
 // --- State ---
 const state = {
   root: "C",
-  type: "Major",
+  type: "maj",
   voicingIndex: 0,
   tuning: "standard",
   notation: localStorage.getItem("guitar_notation") || "anglo",
