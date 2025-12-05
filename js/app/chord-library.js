@@ -577,9 +577,30 @@ const playChordBtn = document.getElementById("playChordBtn");
 
 // --- Audio Context ---
 let audioCtx;
+const audioBuffers = {}; // Map MIDI note -> AudioBuffer
+window.sampleBuffers = {}; // Initialize immediately to avoid undefined checks
+
+const AVAILABLE_SAMPLES = {
+  36: "C2_s1_01.mp3",
+  41: "F2_s1_01.mp3",
+  45: "A2_s2_01.mp3",
+  48: "C3_s2_02.mp3",
+  52: "E3_s3_01.mp3",
+  55: "G3_s4_01.mp3",
+  59: "B3_s5_01.mp3",
+  64: "E4_s6_01.mp3",
+  67: "G4_s6_01.mp3",
+  71: "B4_s6_01.mp3",
+  74: "D5_s6_01.mp3",
+  80: "G#5_s6_03.mp3",
+  85: "C#6_s6_01.mp3",
+};
 
 // --- Initialization ---
 document.addEventListener("DOMContentLoaded", async () => {
+  // Preload samples
+  loadGuitarSamples();
+
   // Set translation prefix
   if (window.setTranslationPrefix) {
     window.setTranslationPrefix("chord-library/chord-library");
@@ -694,13 +715,50 @@ function init() {
   updateDisplay();
 }
 
-function playCurrentChord() {
+async function loadGuitarSamples() {
+  console.log("Starting to load guitar samples...");
+  const promises = Object.entries(AVAILABLE_SAMPLES).map(
+    async ([midi, filename]) => {
+      try {
+        const response = await fetch(`sounds/${filename}`);
+        if (response.ok) {
+          const arrayBuffer = await response.arrayBuffer();
+          window.sampleBuffers[midi] = arrayBuffer;
+          // console.log(`Loaded sample: ${filename}`);
+        } else {
+          console.warn(`Failed to fetch ${filename}: ${response.status} ${response.statusText}`);
+        }
+      } catch (e) {
+        console.warn(`Could not load sample ${filename}`, e);
+      }
+    }
+  );
+  await Promise.all(promises);
+  console.log("All samples loaded (pending decode). Count:", Object.keys(window.sampleBuffers).length);
+}
+
+async function playCurrentChord() {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   }
 
   if (audioCtx.state === "suspended") {
-    audioCtx.resume();
+    await audioCtx.resume();
+  }
+
+  // Decode any pending buffers
+  if (window.sampleBuffers) {
+    for (const [midi, arrayBuffer] of Object.entries(window.sampleBuffers)) {
+      if (!audioBuffers[midi]) {
+        try {
+          // Clone buffer because decodeAudioData detaches it
+          const tempBuffer = arrayBuffer.slice(0);
+          audioBuffers[midi] = await audioCtx.decodeAudioData(tempBuffer);
+        } catch (e) {
+          console.error(`Error decoding sample for MIDI ${midi}`, e);
+        }
+      }
+    }
   }
 
   const variations = getVariations();
@@ -708,26 +766,74 @@ function playCurrentChord() {
   if (!currentChord) return;
 
   // Standard Tuning MIDI numbers: E2=40, A2=45, D3=50, G3=55, B3=59, E4=64
-  // Note: This assumes standard tuning for now, as the library visualization does.
   const stringBaseMidi = [40, 45, 50, 55, 59, 64];
-  
+
   const now = audioCtx.currentTime;
-  const duration = 2.0; // seconds
+  const duration = 3.5; // seconds
 
   // Strumming effect: slight delay between strings
-  // We strum from low to high strings (index 0 to 5)
   let noteCount = 0;
   currentChord.frets.forEach((fret, stringIndex) => {
-    if (fret !== -1) { // Not muted
+    if (fret !== -1) {
+      // Not muted
       const midiNote = stringBaseMidi[stringIndex] + fret;
-      const frequency = 440 * Math.pow(2, (midiNote - 69) / 12);
-      
-      // Delay increases with string index (downstroke)
-      const delay = stringIndex * 0.05; 
-      playTone(frequency, now, duration, delay);
+      const delay = stringIndex * 0.05; // Downstroke strum
+
+      playBestSample(midiNote, now, duration, delay);
       noteCount++;
     }
   });
+}
+
+function playBestSample(targetMidi, startTime, duration, delay) {
+  // Find closest available sample
+  let bestBaseMidi = -1;
+  let minDistance = Infinity;
+
+  const availableMidis = Object.keys(audioBuffers).map(Number);
+  
+  if (availableMidis.length === 0) {
+    // Fallback to synth if no samples loaded
+    console.warn("No samples available in audioBuffers, falling back to synth.");
+    const frequency = 440 * Math.pow(2, (targetMidi - 69) / 12);
+    playTone(frequency, startTime, duration, delay);
+    return;
+  }
+
+  availableMidis.forEach((baseMidi) => {
+    const dist = Math.abs(targetMidi - baseMidi);
+    if (dist < minDistance) {
+      minDistance = dist;
+      bestBaseMidi = baseMidi;
+    }
+  });
+
+  const buffer = audioBuffers[bestBaseMidi];
+  if (!buffer) return;
+
+  const source = audioCtx.createBufferSource();
+  source.buffer = buffer;
+
+  // Calculate playback rate
+  const semitones = targetMidi - bestBaseMidi;
+  const rate = Math.pow(2, semitones / 12);
+
+  source.playbackRate.value = rate;
+
+  const gain = audioCtx.createGain();
+  gain.gain.value = 0.5; // Base volume
+
+  source.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  const start = startTime + delay;
+  source.start(start);
+
+  // Fade out
+  gain.gain.setValueAtTime(0.5, start + duration - 0.5);
+  gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+
+  source.stop(start + duration + 0.1);
 }
 
 function playTone(freq, startTime, duration, delay) {
