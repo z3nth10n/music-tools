@@ -604,6 +604,18 @@ function saveCustomTunings() {
 }
 
 // --- State ---
+const defaultAdvanced = {
+  shiftFull: 0,
+  shiftOctaves: 0,
+  shiftSemitones: 0,
+  shiftCents: 0,
+  formantFull: 0,
+  formantSemitones: 0,
+  formantCents: 0
+};
+
+const savedAdvanced = JSON.parse(localStorage.getItem("guitar_advanced_settings")) || defaultAdvanced;
+
 const state = {
   root: "C",
   type: "maj",
@@ -613,6 +625,7 @@ const state = {
   notation: localStorage.getItem("guitar_notation") || "anglo",
   soundProfile: localStorage.getItem("guitar_sound_profile") || "guitar-clean",
   showOctave: false,
+  advanced: savedAdvanced
 };
 
 // --- DOM Elements ---
@@ -628,14 +641,20 @@ const langSelect = document.getElementById("langSelect");
 const notationSelect = document.getElementById("notationSelect");
 const soundSelect = document.getElementById("soundSelect");
 const tuningSelect = document.getElementById("tuningSelect");
+const saveTuningBtn = document.getElementById("saveTuningBtn");
+const deleteTuningBtn = document.getElementById("deleteTuningBtn");
 const stringTuningsContainer = document.getElementById("stringTunings");
 const showOctaveCb = document.getElementById("showOctaveCb");
 const playChordBtn = document.getElementById("playChordBtn");
+
+// Advanced Settings DOM
+// Elements are fetched in initAdvancedSettings to ensure availability
 
 // --- Audio Context ---
 let audioCtx;
 const audioBuffers = {}; // Map MIDI note -> AudioBuffer
 window.sampleBuffers = {}; // Initialize immediately to avoid undefined checks
+let currentLoadSession = 0; // To prevent race conditions when switching sounds
 
 const AVAILABLE_SAMPLES = {
   36: "C2.mp3",
@@ -649,8 +668,8 @@ const AVAILABLE_SAMPLES = {
   67: "G4.mp3",
   71: "B4.mp3",
   74: "D5.mp3",
-  80: "G#5.mp3",
-  85: "C#6.mp3",
+  // 80: "G#5.mp3", // Missing on server
+  // 85: "C#6.mp3", // Missing on server
 };
 
 
@@ -758,6 +777,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 function init() {
   renderRootPicker();
   renderTypePicker();
+  initAdvancedSettings();
 
   // Event Listeners
   // Type selection is handled in renderTypePicker
@@ -796,12 +816,65 @@ function init() {
     updateTuning(e.target.value);
   });
 
+  // Save Tuning Button
+  if (saveTuningBtn) {
+    saveTuningBtn.addEventListener("click", () => {
+      const currentVal = tuningSelect.value;
+      
+      if (currentVal.startsWith("custom::")) {
+        // Overwrite existing custom tuning
+        const name = currentVal.split("::")[1];
+        customTunings[name] = [...state.currentTuning];
+        saveCustomTunings();
+        
+        // Refresh select and update UI (hides save button)
+        populateTuningSelect(currentVal);
+        updateTuning(currentVal);
+      } else {
+        // Create new custom tuning
+        const name = prompt(window.t ? window.t("prompt_tuning_name") : "Enter tuning name:");
+        if (name) {
+          // Save to custom tunings
+          customTunings[name] = [...state.currentTuning];
+          saveCustomTunings();
+          
+          // Refresh select and select the new tuning
+          const newValue = "custom::" + name;
+          populateTuningSelect(newValue);
+          updateTuning(newValue);
+        }
+      }
+    });
+  }
+
+  // Delete Tuning Button
+  if (deleteTuningBtn) {
+    deleteTuningBtn.addEventListener("click", () => {
+      const value = tuningSelect.value;
+      if (value.startsWith("custom::")) {
+        const name = value.split("::")[1];
+        if (confirm((window.t ? window.t("confirm_delete_tuning") : "Delete tuning?") + " " + name)) {
+          delete customTunings[name];
+          saveCustomTunings();
+          
+          // Switch to standard
+          populateTuningSelect("builtin::tuning_e_std");
+          updateTuning("builtin::tuning_e_std");
+        }
+      }
+    });
+  }
+
   // Initial Render
   updateDisplay();
+  initAdvancedSettings();
 }
 
 async function loadGuitarSamples() {
-  console.log(`Starting to load guitar samples (${state.soundProfile})...`);
+  currentLoadSession++;
+  const mySessionId = currentLoadSession;
+  console.log(`Starting to load guitar samples (${state.soundProfile}) [Session ${mySessionId}]...`);
+  
   // Clear existing buffers if reloading
   window.sampleBuffers = {};
   // Clear decoded buffers
@@ -809,14 +882,20 @@ async function loadGuitarSamples() {
 
   const promises = Object.entries(AVAILABLE_SAMPLES).map(
     async ([midi, filename]) => {
+      if (mySessionId !== currentLoadSession) return; // Abort if new session started
+
       try {
-        const response = await fetch(`sounds/${state.soundProfile}/${filename}`);
+        const url = `sounds/${state.soundProfile}/${encodeURIComponent(filename)}`;
+        const response = await fetch(url);
+        
+        if (mySessionId !== currentLoadSession) return; // Check again
+
         if (response.ok) {
           const arrayBuffer = await response.arrayBuffer();
+          if (mySessionId !== currentLoadSession) return; // Check again
           window.sampleBuffers[midi] = arrayBuffer;
-          // console.log(`Loaded sample: ${filename}`);
         } else {
-          console.warn(`Failed to fetch ${filename}: ${response.status} ${response.statusText}`);
+          console.warn(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
         }
       } catch (e) {
         console.warn(`Could not load sample ${filename}`, e);
@@ -824,7 +903,10 @@ async function loadGuitarSamples() {
     }
   );
   await Promise.all(promises);
-  console.log("All samples loaded (pending decode). Count:", Object.keys(window.sampleBuffers).length);
+  
+  if (mySessionId === currentLoadSession) {
+    console.log(`All samples loaded for session ${mySessionId}. Count:`, Object.keys(window.sampleBuffers).length);
+  }
 }
 
 async function playCurrentChord() {
@@ -914,10 +996,41 @@ function playBestSample(targetMidi, startTime, duration, delay) {
 
   source.playbackRate.value = rate;
 
+  // --- Advanced Pitch Shift ---
+  const totalDetune = 
+    (state.advanced.shiftOctaves * 1200) +
+    (state.advanced.shiftSemitones * 100) +
+    (state.advanced.shiftFull * 100) + 
+    state.advanced.shiftCents;
+  
+  source.detune.value = totalDetune;
+
+  // --- Advanced Formant Shift (Simulated) ---
+  const totalFormantShift = 
+    (state.advanced.formantFull * 100) +
+    (state.advanced.formantSemitones * 100) +
+    state.advanced.formantCents;
+
+  let outputNode = source;
+
+  if (totalFormantShift !== 0) {
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = "peaking";
+    filter.Q.value = 1;
+    filter.gain.value = 6; 
+    
+    const baseFreq = 1000;
+    const ratio = Math.pow(2, totalFormantShift / 1200);
+    filter.frequency.value = baseFreq * ratio;
+    
+    source.connect(filter);
+    outputNode = filter;
+  }
+
   const gain = audioCtx.createGain();
   gain.gain.value = 0.5; // Base volume
 
-  source.connect(gain);
+  outputNode.connect(gain);
   gain.connect(audioCtx.destination);
 
   const start = startTime + delay;
@@ -1296,7 +1409,7 @@ function showStringTuningSelect(target, stringIndex, currentMidi) {
     div.className = "tuning-option";
     if (i === 0) div.classList.add("current");
     
-    div.textContent = getNoteName(midi, true); // Show octave
+    div.textContent = getNoteName(midi, state.showOctave);
     
     div.onclick = () => {
       updateSingleString(stringIndex, midi);
@@ -1342,11 +1455,13 @@ function updateSingleString(stringIndex, newMidi) {
   const arrayIndex = 5 - stringIndex;
   state.currentTuning[arrayIndex] = newMidi;
   
-  // Check if this matches a custom tuning or create new
-  tuningSelect.value = "custom"; // Or handle custom logic
+  // When modifying a string, we are in "unsaved" mode unless we match an existing one
+  // But for simplicity, we just set the select to empty or a placeholder if possible
+  // Or we can keep the current value but show the "Save" button
   
-  // Save as "Custom"
-  // For now, just update state and re-render
+  // Show Save button
+  if (saveTuningBtn) saveTuningBtn.style.display = "inline-flex";
+  
   renderStringTunings();
   
   // Re-generate chord data with new tuning
@@ -1359,10 +1474,14 @@ function updateTuning(value) {
   if (value.startsWith("builtin::")) {
     const key = value.split("::")[1];
     state.currentTuning = [...builtInTunings[key]];
+    if (deleteTuningBtn) deleteTuningBtn.style.display = "none";
+    if (saveTuningBtn) saveTuningBtn.style.display = "none";
   } else if (value.startsWith("custom::")) {
     const key = value.split("::")[1];
     if (customTunings[key]) {
       state.currentTuning = [...customTunings[key]];
+      if (deleteTuningBtn) deleteTuningBtn.style.display = "inline-flex";
+      if (saveTuningBtn) saveTuningBtn.style.display = "none"; // Already saved
     }
   }
   
@@ -1373,4 +1492,111 @@ function updateTuning(value) {
   CHORD_DATA = generateChordData(state.currentTuning);
   applyOverrides(CHORD_DATA);
   updateDisplay();
+}
+
+// Advanced Settings
+function initAdvancedSettings() {
+  // Re-fetch elements to ensure they exist
+  const advancedSettingsBtn = document.getElementById("advancedSettingsBtn");
+  const advancedSettingsContent = document.getElementById("advancedSettingsContent");
+  const resetAdvancedBtn = document.getElementById("resetAdvancedBtn");
+  
+  const advControls = {
+    shiftFull: document.getElementById("shiftFull"),
+    shiftOctaves: document.getElementById("shiftOctaves"),
+    shiftSemitones: document.getElementById("shiftSemitones"),
+    shiftCents: document.getElementById("shiftCents"),
+    formantFull: document.getElementById("formantFull"),
+    formantSemitones: document.getElementById("formantSemitones"),
+    formantCents: document.getElementById("formantCents")
+  };
+
+  const advDisplays = {
+    shiftFull: document.getElementById("shiftFullVal"),
+    shiftOctaves: document.getElementById("shiftOctavesVal"),
+    shiftSemitones: document.getElementById("shiftSemitonesVal"),
+    shiftCents: document.getElementById("shiftCentsVal"),
+    formantFull: document.getElementById("formantFullVal"),
+    formantSemitones: document.getElementById("formantSemitonesVal"),
+    formantCents: document.getElementById("formantCentsVal")
+  };
+  
+  if (!advancedSettingsBtn || !advancedSettingsContent) {
+    console.warn("Advanced settings elements not found");
+    return;
+  }
+
+  // Accordion Toggle
+  // Remove existing listeners to avoid duplicates if init is called multiple times
+  const newBtn = advancedSettingsBtn.cloneNode(true);
+  advancedSettingsBtn.parentNode.replaceChild(newBtn, advancedSettingsBtn);
+  
+  newBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    newBtn.classList.toggle("active");
+    advancedSettingsContent.classList.toggle("open");
+  });
+
+  // Initialize Sliders
+  Object.keys(advControls).forEach(key => {
+    const input = advControls[key];
+    const display = advDisplays[key];
+    if (!input || !display) return;
+
+    // Set initial value
+    input.value = state.advanced[key];
+    updateAdvancedDisplay(key, state.advanced[key], advDisplays);
+
+    // Event Listener
+    input.addEventListener("input", (e) => {
+      const val = parseInt(e.target.value);
+      state.advanced[key] = val;
+      updateAdvancedDisplay(key, val, advDisplays);
+      saveAdvancedSettings();
+    });
+  });
+
+  // Reset Button
+  if (resetAdvancedBtn) {
+    const newResetBtn = resetAdvancedBtn.cloneNode(true);
+    resetAdvancedBtn.parentNode.replaceChild(newResetBtn, resetAdvancedBtn);
+
+    newResetBtn.addEventListener("click", () => {
+      // Reset state
+      state.advanced = { ...defaultAdvanced };
+      
+      // Update UI
+      Object.keys(advControls).forEach(key => {
+        const input = advControls[key];
+        if (input) {
+          input.value = state.advanced[key];
+          updateAdvancedDisplay(key, state.advanced[key], advDisplays);
+        }
+      });
+
+      saveAdvancedSettings();
+    });
+  }
+}
+
+function updateAdvancedDisplay(key, value, displaysMap) {
+  let display;
+  if (displaysMap) {
+    display = displaysMap[key];
+  } else {
+    display = document.getElementById(key + "Val");
+  }
+  
+  if (!display) return;
+  
+  let unit = "";
+  if (key.includes("Octaves")) unit = " oct";
+  else if (key.includes("Cents")) unit = " ct";
+  else unit = " st";
+
+  display.textContent = (value > 0 ? "+" : "") + value + unit;
+}
+
+function saveAdvancedSettings() {
+  localStorage.setItem("guitar_advanced_settings", JSON.stringify(state.advanced));
 }

@@ -28,6 +28,8 @@ window.translations_en = {
   label_type: "Type",
   type_maj: "maj",
   type_min: "min",
+  prompt_tuning_name: "Enter tuning name:",
+  confirm_delete_tuning: "Are you sure you want to delete this tuning?",
   type_7: "7",
   type_5: "5",
   type_6: "6",
@@ -60,4 +62,17 @@ window.translations_en = {
   finger_middle: "Middle",
   finger_ring: "Ring",
   finger_pinky: "Pinky",
+  
+  // Advanced Settings
+  advanced_settings: "Advanced Settings",
+  pitch_shift: "Pitch Shift",
+  shift_full: "Shift (Full Range)",
+  shift_octaves: "Shift (Octaves)",
+  shift_semitones: "Shift (Semitones)",
+  shift_cents: "Shift (Cents)",
+  formant_shift: "Formant Shift",
+  formant_full: "Formant (Full)",
+  formant_semitones: "Formant (Semitones)",
+  formant_cents: "Formant (Cents)",
+  btn_reset_defaults: "Reset Defaults",
 };

@@ -28,6 +28,8 @@ window.translations_es = {
   label_type: "Tipo",
   type_maj: "Mayor",
   type_min: "Menor",
+  prompt_tuning_name: "Introduce el nombre de la afinación:",
+  confirm_delete_tuning: "¿Estás seguro de que quieres eliminar esta afinación?",
   type_7: "7",
   type_5: "5",
   type_6: "6",
@@ -60,4 +62,17 @@ window.translations_es = {
   finger_middle: "Medio",
   finger_ring: "Anular",
   finger_pinky: "Meñique",
+
+  // Advanced Settings
+  advanced_settings: "Ajustes Avanzados",
+  pitch_shift: "Cambio de Tono",
+  shift_full: "Cambio (Rango Completo)",
+  shift_octaves: "Cambio (Octavas)",
+  shift_semitones: "Cambio (Semitonos)",
+  shift_cents: "Cambio (Centésimas)",
+  formant_shift: "Cambio de Formante",
+  formant_full: "Formante (Completo)",
+  formant_semitones: "Formante (Semitonos)",
+  formant_cents: "Formante (Centésimas)",
+  btn_reset_defaults: "Restablecer Valores",
 };
