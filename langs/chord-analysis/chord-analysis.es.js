@@ -61,6 +61,7 @@ window.translations_es = {
   label_note_hold_time: "Tiempo retención nota (ms)",
   label_chord_min_quality: "Calidad mínima acorde (0-1)",
   label_min_volume_rms: "Umbral de volumen (RMS)",
+  label_input_gain: "Ganancia de entrada (dB)",
   btn_save_settings: "Guardar ajustes",
   btn_reset_settings: "Reset a valores por defecto",
   label_logs_debug: "Logs / debug",

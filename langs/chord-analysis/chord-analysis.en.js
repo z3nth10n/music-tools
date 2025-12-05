@@ -60,6 +60,7 @@ window.translations_en = {
   label_note_hold_time: "Note hold time (ms)",
   label_chord_min_quality: "Min. chord quality (0-1)",
   label_min_volume_rms: "Volume threshold (RMS)",
+  label_input_gain: "Input Gain (dB)",
   btn_save_settings: "Save settings",
   btn_reset_settings: "Reset to defaults",
   label_logs_debug: "Logs / debug",

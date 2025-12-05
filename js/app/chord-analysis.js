@@ -60,6 +60,7 @@ const DEFAULT_DETECTION_SETTINGS = {
   noteHoldTimeMs: 100,    // note retention time on screen
   chordMinQuality: 0.52,  // quality threshold to accept a chord
   minVolumeRms: 0.003,    // minimum volume threshold (RMS)
+  inputGainDb: 0,         // input gain in dB (-30 to +30)
 };
 
 let NOTE_HISTORY_WINDOW_MS = DEFAULT_DETECTION_SETTINGS.historyWindowMs;
@@ -68,6 +69,7 @@ let MAX_DEVIATION_CENTS = DEFAULT_DETECTION_SETTINGS.maxDeviationCents;
 let NOTE_HOLD_TIME_MS = DEFAULT_DETECTION_SETTINGS.noteHoldTimeMs;
 let CHORD_MIN_QUALITY = DEFAULT_DETECTION_SETTINGS.chordMinQuality;
 let MIN_VOLUME_RMS = DEFAULT_DETECTION_SETTINGS.minVolumeRms;
+let INPUT_GAIN_DB = DEFAULT_DETECTION_SETTINGS.inputGainDb;
 
 // Store recently detected notes: { pc, time }
 let recentNotes = [];
@@ -168,6 +170,7 @@ const CHORD_TYPES = [
 let audioContext = null;
 let analyser = null;
 let mediaStream = null;
+let inputGainNode = null;
 let running = false;
 
 const timeDomainBufferSize = 2048;
@@ -177,6 +180,14 @@ let lastAnalysisTime = 0;
 let analysisInterval = 50; // ms
 
 let lastNoteTimestamp = 0;
+
+function updateInputGain() {
+  if (inputGainNode && audioContext) {
+    // Convert dB to linear gain: 10^(dB/20)
+    const gain = Math.pow(10, INPUT_GAIN_DB / 20);
+    inputGainNode.gain.setValueAtTime(gain, audioContext.currentTime);
+  }
+}
 
 // ===================== UI Elements =====================
 const toggleButton = document.getElementById("toggleButton");
@@ -200,6 +211,7 @@ const maxDeviationCentsInput = document.getElementById("maxDeviationCentsInput")
 const noteHoldTimeInput = document.getElementById("noteHoldTimeInput");
 const chordMinQualityInput = document.getElementById("chordMinQualityInput");
 const minVolumeRmsInput = document.getElementById("minVolumeRmsInput");
+const inputGainDbInput = document.getElementById("inputGainDbInput");
 const saveDetectionSettingsBtn = document.getElementById("saveDetectionSettingsBtn");
 const resetDetectionSettingsBtn = document.getElementById("resetDetectionSettingsBtn");
 
@@ -289,6 +301,8 @@ function applyDetectionSettings(settings) {
   NOTE_HOLD_TIME_MS = settings.noteHoldTimeMs;
   CHORD_MIN_QUALITY = settings.chordMinQuality;
   MIN_VOLUME_RMS = settings.minVolumeRms;
+  INPUT_GAIN_DB = settings.inputGainDb;
+  updateInputGain();
 }
 
 function reflectDetectionSettingsInInputs(settings) {
@@ -309,6 +323,9 @@ function reflectDetectionSettingsInInputs(settings) {
   }
   if (minVolumeRmsInput) {
     minVolumeRmsInput.value = settings.minVolumeRms;
+  }
+  if (inputGainDbInput) {
+    inputGainDbInput.value = settings.inputGainDb;
   }
 }
 
@@ -336,6 +353,9 @@ function loadDetectionSettingsFromStorage() {
       if (typeof parsed.minVolumeRms === "number" && parsed.minVolumeRms >= 0) {
         settings.minVolumeRms = parsed.minVolumeRms;
       }
+      if (typeof parsed.inputGainDb === "number") {
+        settings.inputGainDb = parsed.inputGainDb;
+      }
     } catch (e) {
       console.warn("Could not parse detection settings from storage:", e);
     }
@@ -344,8 +364,8 @@ function loadDetectionSettingsFromStorage() {
   reflectDetectionSettingsInInputs(settings);
   
   const msg = window.t 
-    ? window.t("msg_settings_loaded", settings.historyWindowMs, settings.minNotesForChord, settings.maxDeviationCents, settings.noteHoldTimeMs, settings.chordMinQuality, settings.minVolumeRms)
-    : `Advanced settings loaded (window=${settings.historyWindowMs}ms, min notes=${settings.minNotesForChord}, max dev=${settings.maxDeviationCents}cents, hold=${settings.noteHoldTimeMs}ms, quality=${settings.chordMinQuality}, vol=${settings.minVolumeRms})`;
+    ? window.t("msg_settings_loaded", settings.historyWindowMs, settings.minNotesForChord, settings.maxDeviationCents, settings.noteHoldTimeMs, settings.chordMinQuality, settings.minVolumeRms, settings.inputGainDb)
+    : `Advanced settings loaded (window=${settings.historyWindowMs}ms, min notes=${settings.minNotesForChord}, max dev=${settings.maxDeviationCents}cents, hold=${settings.noteHoldTimeMs}ms, quality=${settings.chordMinQuality}, vol=${settings.minVolumeRms}, gain=${settings.inputGainDb}dB)`;
   logMessage(msg);
 }
 
@@ -376,6 +396,10 @@ function readDetectionSettingsFromInputs() {
     const v = parseFloat(minVolumeRmsInput.value);
     if (!isNaN(v) && v >= 0) settings.minVolumeRms = v;
   }
+  if (inputGainDbInput) {
+    const v = parseFloat(inputGainDbInput.value);
+    if (!isNaN(v)) settings.inputGainDb = v;
+  }
 
   return settings;
 }
@@ -386,8 +410,8 @@ function saveDetectionSettingsFromInputs() {
   applyDetectionSettings(settings);
   
   const msg = window.t 
-    ? window.t("msg_settings_saved", settings.historyWindowMs, settings.minNotesForChord, settings.maxDeviationCents, settings.noteHoldTimeMs, settings.chordMinQuality, settings.minVolumeRms)
-    : `Advanced settings saved (window=${settings.historyWindowMs}ms, min notes=${settings.minNotesForChord}, max dev=${settings.maxDeviationCents}cents, hold=${settings.noteHoldTimeMs}ms, quality=${settings.chordMinQuality}, vol=${settings.minVolumeRms})`;
+    ? window.t("msg_settings_saved", settings.historyWindowMs, settings.minNotesForChord, settings.maxDeviationCents, settings.noteHoldTimeMs, settings.chordMinQuality, settings.minVolumeRms, settings.inputGainDb)
+    : `Advanced settings saved (window=${settings.historyWindowMs}ms, min notes=${settings.minNotesForChord}, max dev=${settings.maxDeviationCents}cents, hold=${settings.noteHoldTimeMs}ms, quality=${settings.chordMinQuality}, vol=${settings.minVolumeRms}, gain=${settings.inputGainDb}dB)`;
   logMessage(msg);
 }
 
@@ -759,11 +783,17 @@ async function startListening() {
     mediaStream = stream;
     const source = audioContext.createMediaStreamSource(stream);
 
+    // Create Gain Node for input boost
+    inputGainNode = audioContext.createGain();
+    updateInputGain();
+
     analyser = audioContext.createAnalyser();
     analyser.fftSize = timeDomainBufferSize * 2; // 4096
     analyser.smoothingTimeConstant = 0.85;
 
-    source.connect(analyser);
+    // Connect: Source -> Gain -> Analyser
+    source.connect(inputGainNode);
+    inputGainNode.connect(analyser);
 
     running = true;
     toggleButton.textContent = window.t
