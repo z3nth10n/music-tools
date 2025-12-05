@@ -1,5 +1,7 @@
 # Guitar Chords Web App
 
+**🌐 Official Website:** [https://z3nth10n.github.io/music-tools](https://z3nth10n.github.io/music-tools)
+
 A comprehensive web-based toolkit for guitarists, featuring a chord detector, a real-time audio analyzer, and an extensive chord library. Built with modern web technologies, it offers a sleek, responsive interface and supports multiple languages and musical notations.
 
 ![Home Screen](images/docs/index.png)
