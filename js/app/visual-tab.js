@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let tabsData = [];
 
     // Initialize
-    await loadTabs();
+    // await loadTabs(); // Moved to end to ensure constants are loaded
 
     backButton.addEventListener('click', () => {
         playerContainer.style.display = 'none';
@@ -211,6 +211,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (stringRegex.test(line)) {
                 // If we already have 6 strings and find a new one, it's a new block
                 if (tempStrings.length === 6) {
+                    if (!tempChord) {
+                        tempChord = generateChordLine({ strings: tempStrings });
+                    }
                     blocks.push({ strings: tempStrings, chords: tempChord });
                     tempStrings = [];
                     tempChord = null;
@@ -222,6 +225,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         // Push last block
         if (tempStrings.length > 0) {
+            if (!tempChord) {
+                tempChord = generateChordLine({ strings: tempStrings });
+            }
             blocks.push({ strings: tempStrings, chords: tempChord });
         }
         
@@ -486,4 +492,167 @@ document.addEventListener('DOMContentLoaded', async () => {
             return this;
         }
     }
+
+    // --- Chord Detection Logic ---
+    const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+    const STANDARD_TUNING_MIDI = [64, 59, 55, 50, 45, 40]; // E4, B3, G3, D3, A2, E2
+
+    const CHORD_PATTERNS = [
+        { name: "Major", suffix: "", intervals: [0, 4, 7] },
+        { name: "Minor", suffix: "m", intervals: [0, 3, 7] },
+        { name: "5", suffix: "5", intervals: [0, 7] },
+        { name: "Dim", suffix: "dim", intervals: [0, 3, 6] },
+        { name: "Aug", suffix: "aug", intervals: [0, 4, 8] },
+        { name: "Sus2", suffix: "sus2", intervals: [0, 2, 7] },
+        { name: "Sus4", suffix: "sus4", intervals: [0, 5, 7] },
+        { name: "Maj7", suffix: "maj7", intervals: [0, 4, 7, 11] },
+        { name: "m7", suffix: "m7", intervals: [0, 3, 7, 10] },
+        { name: "7", suffix: "7", intervals: [0, 4, 7, 10] },
+    ];
+
+    function getNoteName(midi) {
+        return NOTE_NAMES[midi % 12];
+    }
+
+    function detectChord(notePcs) {
+        const pcs = Array.from(new Set(notePcs));
+        if (pcs.length === 0) return null;
+        pcs.sort((a, b) => a - b);
+
+        if (pcs.length === 2) {
+            const [a, b] = pcs;
+            const intervalAB = (b - a + 12) % 12;
+            const intervalBA = (a - b + 12) % 12;
+            if (intervalAB === 7 || intervalBA === 7) {
+                const rootPc = intervalAB === 7 ? a : b;
+                return { name: getNoteName(rootPc) + "5" };
+            }
+        }
+
+        let bestMatch = null;
+        pcs.forEach((rootPc) => {
+            const intervals = pcs.map((pc) => (pc - rootPc + 12) % 12).sort((a, b) => a - b);
+            const intervalSet = new Set(intervals);
+
+            CHORD_PATTERNS.forEach((pattern) => {
+                if (pattern.intervals.every((i) => intervalSet.has(i))) {
+                    const score = pattern.intervals.length;
+                    if (!bestMatch || score > bestMatch.score) {
+                        bestMatch = { rootPc, pattern, score };
+                    }
+                }
+            });
+        });
+
+        if (bestMatch) {
+            return { name: getNoteName(bestMatch.rootPc) + bestMatch.pattern.suffix };
+        }
+        return null;
+    }
+
+    function generateChordLine(block) {
+        // Create a line of spaces matching the length of the strings
+        const length = block.strings[0].length;
+        let chordLine = Array(length).fill(' ');
+        
+        // We need to prefix with 'x|' to match the format expected by renderVisualTab
+        // But renderVisualTab expects 'x|' at the beginning of the string.
+        // The length of the string includes the prefix 'e|' etc.
+        // So we should start filling from index 2 (after 'x|')
+        
+        // Wait, the strings in block.strings include the prefix 'e|'.
+        // So we should iterate from index 0 to length.
+        // But usually tabs have 'e|--...'
+        // We should only detect chords where there are notes.
+        
+        let lastChord = "";
+        
+        for (let i = 0; i < length; i++) {
+            // Check if this column has notes
+            let notesMidi = [];
+            let hasNote = false;
+            
+            for (let s = 0; s < 6; s++) {
+                if (s < block.strings.length) {
+                    const char = block.strings[s][i];
+                    const fret = parseInt(char);
+                    if (!isNaN(fret)) {
+                        hasNote = true;
+                        // Calculate MIDI note
+                        // Standard tuning: E A D G B e -> 40 45 50 55 59 64 (reversed in array usually?)
+                        // In visual-tab.js: stringNames = ['e', 'B', 'G', 'D', 'A', 'E'];
+                        // stringColors = ...
+                        // So index 0 is high 'e' (MIDI 64), index 5 is low 'E' (MIDI 40).
+                        // STANDARD_TUNING_MIDI in chord-by-fret was [64, 59, 55, 50, 45, 40] which matches.
+                        
+                        const openMidi = STANDARD_TUNING_MIDI[s];
+                        notesMidi.push(openMidi + fret);
+                    }
+                }
+            }
+            
+            if (hasNote && notesMidi.length >= 2) { // Only detect if at least 2 notes? Or 3?
+                // Convert to PC
+                const notesPc = notesMidi.map(m => m % 12);
+                const chord = detectChord(notesPc);
+                
+                if (chord) {
+                    // Avoid repeating the same chord immediately if it's the same
+                    if (chord.name !== lastChord) {
+                        // Place chord name at index i
+                        // We need to make sure we don't overwrite previous chord if it's too close
+                        // But we are building an array of chars.
+                        
+                        const name = chord.name;
+                        // Check if we have space
+                        let canFit = true;
+                        for(let k=0; k<name.length; k++) {
+                            if (i+k < length && chordLine[i+k] !== ' ') {
+                                // Overlap
+                                // If the overlap is with the previous chord, maybe we shouldn't place this one
+                                // or we should have placed the previous one earlier?
+                                // For now, let's just skip if it overlaps?
+                                // Or maybe we overwrite?
+                                // Let's try to place it.
+                            }
+                        }
+                        
+                        // Actually, let's just write it if there is space at i
+                        // If previous chord is "Am" at i-1, then i is 'm'.
+                        // We should probably space them out.
+                        
+                        // Simple approach: Write the chord name into the array
+                        for (let k = 0; k < name.length; k++) {
+                            if (i + k < length) {
+                                chordLine[i + k] = name[k];
+                            }
+                        }
+                        lastChord = chord.name;
+                    }
+                } else {
+                    // If notes change but no chord detected, maybe reset lastChord?
+                    // So if we go back to the same chord later it is redrawn.
+                    // But maybe not reset immediately to avoid flickering on single note changes?
+                    // Let's reset if we have notes but no chord.
+                    lastChord = "";
+                }
+            } else if (hasNote) {
+                // Single note or no chord detected
+                lastChord = "";
+            }
+        }
+        
+        // Construct the line
+        // The prefix should be 'x|'
+        // But the array corresponds to the whole line including prefix.
+        // The strings usually start with 'e|'.
+        // So we should make sure the first 2 chars are 'x|'.
+        
+        chordLine[0] = 'x';
+        chordLine[1] = '|';
+        
+        return chordLine.join('');
+    }
+
+    await loadTabs();
 });
