@@ -273,7 +273,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function loadTabs() {
         try {
-            const response = await fetch('tabs/manifest.json');
+            const response = await fetch('/music-tools/tabs/manifest.json');
             if (!response.ok) throw new Error('Manifest not found');
             const files = await response.json();
             
