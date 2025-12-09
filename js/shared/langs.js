@@ -36,7 +36,8 @@ window.loadTranslations = function (lang, onLanguageLoaded) {
   const script = document.createElement("script");
   script.id = "lang-script";
   script.src =
-    "langs/" +
+    ABSOLUTE_PATH +
+    "/langs/" +
     window.translationPrefix +
     "." +
     lang +
