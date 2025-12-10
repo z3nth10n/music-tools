@@ -536,21 +536,10 @@ async function renderVisualTab() {
         const data = await res.json();
         tab.content = data.tab;
 
-        // Actualizar metadatos desde el propio texto
+        // Leer solo bpm/compás; no sobrescribir título/artista con datos de la tab
         const meta = parseMetadata(tab.content);
-        tab.song = meta.song || tab.song;
-        tab.artist = meta.artist || tab.artist;
         tab.bpm = meta.bpm;
         tab.timeSig = meta.timeSig;
-
-        // Persistir cambios mínimos en la caché (título/artista)
-        const cache = loadRemoteTabsCache();
-        const idx = cache.findIndex((e) => `remote:${e.id}` === tab.id);
-        if (idx !== -1) {
-          cache[idx].title = tab.song;
-          cache[idx].artist = tab.artist;
-          saveRemoteTabsCache(cache);
-        }
       } catch (e) {
         console.error("Error fetching remote tab", e);
         alert("Error downloading tab from server.");
