@@ -633,6 +633,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Nº de compases por canvas
   const BARS_PER_CHUNK = 4; // o 2, 4, 8... a tu gusto
+  const CHORD_TOKEN_REGEX = /\*|([A-Za-z][^\s]*?)(?=\s*(?:[A-Z]|\*|$))/g;
 
   function createChunks(blocks) {
     const chunks = [];
@@ -680,10 +681,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (chordsSlice && block.chords) {
           // Fix: If the slice starts with '*', it means it's a continuation of a chord
           // from the previous chunk. We must resolve it to the actual chord name.
-          const firstTokenMatch = /([A-Za-z0-9#]+|\*)/.exec(chordsSlice);
+          const tokenRegex = new RegExp(CHORD_TOKEN_REGEX);
+          const firstTokenMatch = tokenRegex.exec(chordsSlice);
           if (firstTokenMatch && firstTokenMatch[0] === "*") {
             // Find the last chord in the original string before 'start'
-            const regex = /([A-Za-z0-9#]+|\*)/g;
+            const regex = new RegExp(CHORD_TOKEN_REGEX);
             let match;
             let lastFound = "";
             while ((match = regex.exec(block.chords)) !== null) {
@@ -723,6 +725,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     return chunks;
+  }
+
+  function getFretAt(line, index) {
+    if (!line || index >= line.length) return null;
+
+    const char = line[index];
+    if (!/[0-9]/.test(char)) return null;
+
+    if (index > 0 && /[0-9]/.test(line[index - 1])) {
+      return null;
+    }
+
+    let end = index + 1;
+    while (end < line.length && /[0-9]/.test(line[end])) {
+      end++;
+    }
+
+    return {
+      value: line.slice(index, end),
+      length: end - index,
+    };
   }
 
   // Mapa de figuras rítmicas según los códigos de rhythmStems
@@ -1181,12 +1204,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       iterateBlocks((block, getX, getWidth) => {
         if (block.chords) {
           const chordLine = block.chords;
-          const chordRegex = /([A-Za-z0-9#]+|\*)/g;
+          const chordRegex = new RegExp(CHORD_TOKEN_REGEX);
           let match;
           let lastChordName = "";
+          const chordOffset = chordLine.startsWith("x|") ? 2 : 0;
 
           while ((match = chordRegex.exec(chordLine)) !== null) {
-            if (match.index < 2) continue;
+            if (match.index < chordOffset) continue;
 
             const charIndex = match.index;
             let chordName = match[0];
@@ -1209,8 +1233,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             for (let s = 0; s < 6; s++) {
               if (s < block.strings.length) {
-                const char = block.strings[s][charIndex];
-                if (!isNaN(parseInt(char))) {
+                const fretInfo = getFretAt(block.strings[s], charIndex);
+                if (fretInfo) {
                   if (s < minString) minString = s;
                   if (s > maxString) maxString = s;
                   hasNotes = true;
@@ -1254,10 +1278,10 @@ document.addEventListener("DOMContentLoaded", async () => {
               let frets = [];
               for (let s = 0; s < 6; s++) {
                 if (s < block.strings.length) {
-                  const char = block.strings[s][charIndex];
-                  if (/[0-9]/.test(char)) {
-                    frets.push(char);
-                  } else if (/[xX]/.test(char)) {
+                  const fretInfo = getFretAt(block.strings[s], charIndex);
+                  if (fretInfo) {
+                    frets.push(fretInfo.value);
+                  } else if (/[xX]/.test(block.strings[s][charIndex])) {
                     frets.push("x");
                   } else {
                     frets.push("x");
@@ -1283,10 +1307,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     iterateBlocks((block, getX, getWidth) => {
       const chordPositions = new Set();
       if (showChords && block.chords) {
-        const chordRegex = /([A-Za-z0-9#]+|\*)/g;
+        const chordRegex = new RegExp(CHORD_TOKEN_REGEX);
+        const chordOffset = block.chords.startsWith("x|") ? 2 : 0;
         let match;
         while ((match = chordRegex.exec(block.chords)) !== null) {
-          if (match.index >= 2) chordPositions.add(match.index);
+          if (match.index >= chordOffset) chordPositions.add(match.index);
         }
       }
 
@@ -1297,11 +1322,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         const y = TOP_MARGIN + s * STRING_SPACING;
 
         for (let i = 0; i < line.length; i++) {
-          const char = line[i];
           const x = getX(i);
           const w = getWidth(i);
+          const fretInfo = getFretAt(line, i);
 
-          if (!isNaN(parseInt(char))) {
+          if (fretInfo) {
             if (chordPositions.has(i)) {
               continue;
             }
@@ -1314,13 +1339,17 @@ document.addEventListener("DOMContentLoaded", async () => {
             ctx.fillStyle = "#000";
             ctx.font = "bold 16px Arial";
             ctx.textAlign = "center";
-            ctx.fillText(char, x, y + 6);
+            ctx.fillText(fretInfo.value, x, y + 6);
 
             ctx.shadowColor = stringColors[s];
             ctx.shadowBlur = 10;
             ctx.stroke();
             ctx.shadowBlur = 0;
-          } else if (char.toLowerCase() === "h" || char.toLowerCase() === "p") {
+            continue;
+          }
+
+          const char = line[i];
+          if (char.toLowerCase() === "h" || char.toLowerCase() === "p") {
             let prevIndex = -1;
             for (let k = i - 1; k >= 0; k--) {
               if (!isNaN(parseInt(line[k]))) {
@@ -1627,25 +1656,23 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     let lastWrittenChord = "";
     let lastChordEnd = -1;
+    let lastFullChordIndex = -1;
 
     for (let i = 0; i < length; i++) {
       // Check if this column has notes
       let notesMidi = [];
-      let hasNote = false;
 
       for (let s = 0; s < 6; s++) {
         if (s < block.strings.length) {
-          const char = block.strings[s][i];
-          const fret = parseInt(char);
-          if (!isNaN(fret)) {
-            hasNote = true;
+          const fretInfo = getFretAt(block.strings[s], i);
+          if (fretInfo) {
             const openMidi = STANDARD_TUNING_MIDI[s];
-            notesMidi.push(openMidi + fret);
+            notesMidi.push(openMidi + parseInt(fretInfo.value, 10));
           }
         }
       }
 
-      if (hasNote && notesMidi.length >= 2) {
+      if (notesMidi.length >= 2) {
         const notesPc = notesMidi.map((m) => m % 12);
         const chord = detectChord(notesPc);
 
@@ -1653,25 +1680,33 @@ document.addEventListener("DOMContentLoaded", async () => {
           const name = chord.name;
           
           // Check if we overlap with previous text
-          const overlaps = (i < lastChordEnd);
+          const overlaps = i < lastChordEnd;
 
-          if (name === lastWrittenChord) {
-             // Same chord as previous -> use compact marker '*'
-             // This avoids overlap issues and visual clutter
-             if (i < length) {
-                 chordLine[i] = '*';
-                 lastChordEnd = i + 1;
-             }
+          const isSameChord = name === lastWrittenChord;
+          const farFromLastFull =
+            lastFullChordIndex === -1 || i - lastFullChordIndex > 16;
+
+          if (overlaps) {
+            if (i < length) {
+              chordLine[i] = "*";
+              lastChordEnd = Math.max(lastChordEnd, i + 1);
+              lastWrittenChord = name;
+            }
+          } else if (!isSameChord || farFromLastFull) {
+            for (let k = 0; k < name.length; k++) {
+              if (i + k < length) {
+                chordLine[i + k] = name[k];
+              }
+            }
+            lastChordEnd = i + name.length;
+            lastWrittenChord = name;
+            lastFullChordIndex = i;
           } else {
-             // Different chord -> write full name
-             // (Even if it overlaps, we prioritize the new chord info)
-             for (let k = 0; k < name.length; k++) {
-               if (i + k < length) {
-                 chordLine[i + k] = name[k];
-               }
-             }
-             lastChordEnd = i + name.length;
-             lastWrittenChord = name;
+            if (i < length) {
+              chordLine[i] = "*";
+              lastChordEnd = Math.max(lastChordEnd, i + 1);
+              lastWrittenChord = name;
+            }
           }
         }
       }
