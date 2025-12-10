@@ -1372,14 +1372,27 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
 
             ctx.fillStyle = stringColors[s];
+            const noteWidth = Math.max(20, w);
+            const noteHeight = 32; // altura fija; solo la anchura sigue la figura temporal
+
             ctx.beginPath();
-            ctx.arc(x, y, 16, 0, Math.PI * 2);
+            ctx.roundRect(
+              x - noteWidth / 2,
+              y - noteHeight / 2,
+              noteWidth,
+              noteHeight,
+              8
+            );
             ctx.fill();
+
+            ctx.strokeStyle = stringColors[s];
+            ctx.lineWidth = 2;
+            ctx.stroke();
 
             ctx.fillStyle = "#000";
             ctx.font = "bold 16px Arial";
             ctx.textAlign = "center";
-            ctx.fillText(fretInfo.value, x, y + 6);
+            ctx.fillText(fretInfo.value, x, y + 5);
 
             ctx.shadowColor = stringColors[s];
             ctx.shadowBlur = 10;
