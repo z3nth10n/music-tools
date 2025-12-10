@@ -2,8 +2,8 @@
 if (window.__CHORD_BY_FRET_LOADED) return;
 window.__CHORD_BY_FRET_LOADED = true;
 
-// Notes by semitone (pitch class)
-const NOTE_NAMES = [
+const CONSTS = window.GUITAR_CONSTS || {};
+const NOTE_NAMES = CONSTS.NOTE_NAMES_ANGLO || [
   "C",
   "C#",
   "D",
@@ -17,7 +17,7 @@ const NOTE_NAMES = [
   "A#",
   "B",
 ];
-const NOTE_NAMES_LATIN = [
+const NOTE_NAMES_LATIN = CONSTS.NOTE_NAMES_LATIN || [
   "Do",
   "Do#",
   "Re",
@@ -46,7 +46,14 @@ function getNoteName(midiOrPc, withOctave = false) {
 }
 
 // Standard MIDI for strings 1 to 6 (E4, B3, G3, D3, A2, E2)
-const STANDARD_TUNING_MIDI = [64, 59, 55, 50, 45, 40];
+const STANDARD_TUNING_MIDI = CONSTS.STANDARD_TUNING_MIDI || [
+  64,
+  59,
+  55,
+  50,
+  45,
+  40,
+];
 
 function getClosestMidi(pc, targetMidi) {
   let diff = pc - (targetMidi % 12);
@@ -56,13 +63,13 @@ function getClosestMidi(pc, targetMidi) {
 }
 
 // Built-in tunings (MIDI numbers)
-const builtInTunings = {
-  tuning_e_std: [64, 59, 55, 50, 45, 40], // E4, B3, G3, D3, A2, E2
-  tuning_drop_d: [64, 59, 55, 50, 45, 38], // E4, B3, G3, D3, A2, D2
-  tuning_d_std: [62, 57, 53, 48, 43, 38], // D4, A3, F3, C3, G2, D2
-  tuning_drop_c: [62, 57, 53, 48, 43, 36], // D4, A3, F3, C3, G2, C2
-  tuning_drop_b: [61, 56, 52, 47, 42, 35], // C#4, G#3, E3, B2, F#2, B1
-  tuning_drop_a: [59, 54, 50, 45, 40, 33], // B3, F#3, D3, A2, E2, A1
+const builtInTunings = CONSTS.BUILT_IN_TUNINGS || {
+  tuning_e_std: [64, 59, 55, 50, 45, 40],
+  tuning_drop_d: [64, 59, 55, 50, 45, 38],
+  tuning_d_std: [62, 57, 53, 48, 43, 38],
+  tuning_drop_c: [62, 57, 53, 48, 43, 36],
+  tuning_drop_b: [61, 56, 52, 47, 42, 35],
+  tuning_drop_a: [59, 54, 50, 45, 40, 33],
 };
 
 // Custom tunings

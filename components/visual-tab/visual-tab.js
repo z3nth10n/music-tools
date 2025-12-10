@@ -40,6 +40,8 @@ function drawErrorOnCanvas(msg) {
   ctx.fillText(msg, 10, 50);
 }
 
+const CONSTS = window.GUITAR_CONSTS || {};
+
 async function renderVisualTab() {
   let currentNotation = "english";
 

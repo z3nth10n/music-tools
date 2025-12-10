@@ -2,8 +2,10 @@
 if (window.__CHORD_ANALYSIS_LOADED) return;
 window.__CHORD_ANALYSIS_LOADED = true;
 
+const CONSTS = window.GUITAR_CONSTS || {};
+
 // ===================== Basic Configuration =====================
-const NOTE_NAMES = [
+const NOTE_NAMES = CONSTS.NOTE_NAMES_ANGLO || [
   "C",
   "C#",
   "D",
@@ -17,7 +19,7 @@ const NOTE_NAMES = [
   "A#",
   "B",
 ];
-const NOTE_NAMES_LATIN = [
+const NOTE_NAMES_LATIN = CONSTS.NOTE_NAMES_LATIN || [
   "Do",
   "Do#",
   "Re",
@@ -45,7 +47,7 @@ function getNoteName(midiOrPc, withOctave = false) {
 }
 
 // Standard MIDI tuning: E2, A2, D3, G3, B3, E4
-const STRING_TUNINGS = [
+const STRING_TUNINGS = CONSTS.STRING_TUNINGS_STANDARD || [
   { name: "6th (E)", midi: 40 },
   { name: "5th (A)", midi: 45 },
   { name: "4th (D)", midi: 50 },

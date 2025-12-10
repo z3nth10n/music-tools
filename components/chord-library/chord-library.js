@@ -2,10 +2,12 @@
 if (window.__CHORD_LIBRARY_LOADED) return;
 window.__CHORD_LIBRARY_LOADED = true;
 
+const CONSTS = window.GUITAR_CONSTS || {};
+
 // Chord Library Logic
 
 // --- Data ---
-const NOTES_SHARP = [
+const NOTES_SHARP = CONSTS.NOTES_SHARP || [
   "C",
   "C#",
   "D",
@@ -19,7 +21,7 @@ const NOTES_SHARP = [
   "A#",
   "B",
 ];
-const NOTES_FLAT = [
+const NOTES_FLAT = CONSTS.NOTES_FLAT || [
   "C",
   "Db",
   "D",
@@ -33,18 +35,18 @@ const NOTES_FLAT = [
   "Bb",
   "B",
 ];
-const NOTES_LATIN = [
+const NOTES_LATIN = CONSTS.NOTES_LATIN || [
   "Do",
-  "Do#",
+  "Reb",
   "Re",
-  "Re#",
+  "Mib",
   "Mi",
   "Fa",
-  "Fa#",
+  "Solb",
   "Sol",
-  "Sol#",
+  "Lab",
   "La",
-  "La#",
+  "Sib",
   "Si",
 ];
 
