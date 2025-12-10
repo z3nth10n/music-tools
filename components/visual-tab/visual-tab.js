@@ -244,7 +244,11 @@ async function renderVisualTab() {
     if (!tabAudioEngine || !currentBlocks || !currentBlocks.length) return;
     const bpmValue =
       currentTab && currentTab.bpm ? parseFloat(currentTab.bpm) : null;
-    const timeline = buildPlaybackTimeline(currentBlocks, bpmValue);
+    const timeline = buildPlaybackTimeline(
+      currentBlocks,
+      bpmValue,
+      currentTab ? currentTab.timeSig : null
+    );
     if (!timeline.events.length) {
       console.warn("No playable events detected in this tab");
       return;
@@ -934,59 +938,117 @@ async function renderVisualTab() {
     }
   }
 
-  function buildPlaybackTimeline(blocks, bpmValue) {
+  function parseTimeSignature(text) {
+    if (typeof text !== "string") {
+      return { beats: 4, unit: 4 };
+    }
+    const match = text.match(/(\d+)\s*\/\s*(\d+)/);
+    if (match) {
+      return {
+        beats: parseInt(match[1], 10) || 4,
+        unit: parseInt(match[2], 10) || 4,
+      };
+    }
+    return { beats: 4, unit: 4 };
+  }
+
+  const NOTE_DURATION_QUARTERS = {
+    w: 4,
+    h: 2,
+    b: 2,
+    n: 1,
+    c: 0.5,
+    s: 0.25,
+    t: 0.125,
+    f: 0.0625,
+    r: 1,
+  };
+
+  function buildPlaybackTimeline(blocks, bpmValue, timeSigText) {
     if (!Array.isArray(blocks) || !blocks.length) {
       return { events: [], duration: 0 };
     }
+
     const parsedBpm =
       typeof bpmValue === "number" && !isNaN(bpmValue)
         ? bpmValue
         : parseFloat(bpmValue);
-    const bpm = Math.max(40, parsedBpm || 0) || 90;
-    const sixteenth = 60 / bpm / 4;
+    const bpm = parsedBpm && parsedBpm > 20 ? parsedBpm : 110;
+
+    const { beats, unit } = parseTimeSignature(timeSigText);
+    const secondsPerQuarter = 60 / bpm;
+    const secondsPerMeasure = beats * (4 / unit) * secondsPerQuarter;
+
     const events = [];
     let cursor = 0;
 
     blocks.forEach((block) => {
       if (!block.strings || !block.strings.length) return;
-      const guideLine = block.strings[0];
-      const length = guideLine.length;
-      const offset = /^[a-zA-Z]\|/.test(guideLine) ? 2 : 0;
+      const measures = getMeasureRanges(block);
 
-      for (let i = offset; i < length; i++) {
-        if (guideLine[i] === "|") continue;
-        const multiplier = getColumnDurationMultiplier(block, i);
-        if (multiplier === 0) continue;
-        const duration = Math.max(multiplier * sixteenth, sixteenth * 0.5);
-        const midis = collectColumnMidis(block, i);
-        if (midis.length) {
-          events.push({
-            start: cursor,
-            duration,
-            midis,
-          });
+      measures.forEach((range) => {
+        const columnIndices = [];
+        for (let i = range.start; i < range.end; i++) {
+          if (block.strings[0][i] === "|") continue;
+          columnIndices.push(i);
         }
-        cursor += duration;
-      }
+
+        if (!columnIndices.length) {
+          cursor += secondsPerMeasure;
+          return;
+        }
+
+        const defaultDuration = secondsPerMeasure / columnIndices.length;
+
+        columnIndices.forEach((colIndex) => {
+          const duration =
+            getColumnDurationSeconds(block, colIndex, secondsPerQuarter) ||
+            defaultDuration;
+          const sustain = Math.max(duration * 0.95, 0.35);
+          const midis = collectColumnMidis(block, colIndex);
+          if (midis.length) {
+            events.push({
+              start: cursor,
+              duration: sustain,
+              midis,
+            });
+          }
+          cursor += duration;
+        });
+      });
     });
 
     return { events, duration: cursor };
   }
 
-  function getColumnDurationMultiplier(block, index) {
-    if (!block || !block.strings || !block.strings.length) return 0;
-    const guide = block.strings[0];
-    if (guide[index] === "|") return 0;
-
-    if (block.rhythmStems && block.rhythmStems[index]) {
-      const symbol = block.rhythmStems[index];
-      if (symbol === "|" || symbol.trim() === "") {
-        return 1;
+  function getMeasureRanges(block) {
+    const ref = block.measureNums || block.strings[0] || "";
+    const bars = [];
+    for (let i = 0; i < ref.length; i++) {
+      if (ref[i] === "|") {
+        bars.push(i);
       }
-      return getRhythmWidthMultiplier(symbol);
     }
+    if (!bars.length) {
+      return [{ start: 0, end: ref.length }];
+    }
+    const ranges = [];
+    for (let i = 0; i < bars.length; i++) {
+      const start = bars[i];
+      const end = i + 1 < bars.length ? bars[i + 1] : ref.length;
+      ranges.push({ start, end });
+    }
+    return ranges;
+  }
 
-    return 1;
+  function getColumnDurationSeconds(block, index, secondsPerQuarter) {
+    if (!block || !block.rhythmStems) return null;
+    if (index >= block.rhythmStems.length) return null;
+    const symbol = block.rhythmStems[index];
+    if (!symbol || symbol === "|" || symbol.trim() === "") return null;
+    const code = symbol.toLowerCase();
+    if (!NOTE_DURATION_QUARTERS[code]) return null;
+    return NOTE_DURATION_QUARTERS[code] * secondsPerQuarter;
   }
 
   function collectColumnMidis(block, index) {
