@@ -1010,7 +1010,11 @@ async function renderVisualTab() {
         let w;
 
         const rhythmChar = block.rhythmStems ? block.rhythmStems[i] : null;
-        if (rhythmChar && rhythmChar !== "|") {
+        const isBar = block.strings[0][i] === "|";
+
+        if (isBar) {
+          w = 4; // sin espacio extra en los compases
+        } else if (rhythmChar && rhythmChar !== "|") {
           if (rhythmChar.trim() === "") {
             w = COMPACT_FRET_WIDTH; // sin figura: espaciado mínimo
           } else {
@@ -1318,7 +1322,7 @@ async function renderVisualTab() {
             const startX = getX(charIndex);
             const colW = Math.max(8, getWidth(charIndex));
             let fontSize = 22;
-            const padding = 10;
+            const padding = 0;
             let availableW = Math.max(12, colW - 4);
 
             ctx.font = `bold ${fontSize}px Arial`;
