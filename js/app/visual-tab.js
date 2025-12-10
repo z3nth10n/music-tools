@@ -578,21 +578,45 @@ document.addEventListener("DOMContentLoaded", async () => {
   function renderVisualTab(blocks) {
     console.log("renderVisualTab blocks:", blocks);
 
-    const FRET_WIDTH = 40;
+    const BASE_FRET_WIDTH = 40;
     const STRING_SPACING = 40;
     const TOP_MARGIN = 100; // Increased for measure numbers
     const LEFT_MARGIN = 60;
+    const MAX_CANVAS_WIDTH = 10000;
 
-    // Calculate total width
+    if (!blocks || !blocks.length) {
+        console.warn("renderVisualTab: no blocks to render");
+        return;
+    }
+
+    // Calculamos el número máximo de columnas (caracteres) entre todas las líneas
+    const getMaxLineLength = (str) => (str ? str.length : 0);
+
     let totalSteps = 0;
     blocks.forEach((block) => {
-      if (block.strings.length > 0) {
-        totalSteps += block.strings[0].length;
-      }
+        (block.strings || []).forEach((line) => {
+            totalSteps = Math.max(totalSteps, getMaxLineLength(line));
+        });
+        totalSteps = Math.max(totalSteps, getMaxLineLength(block.chords));
+        totalSteps = Math.max(totalSteps, getMaxLineLength(block.measureNums));
+        totalSteps = Math.max(totalSteps, getMaxLineLength(block.rhythmStems));
     });
 
-    const width = LEFT_MARGIN + totalSteps * FRET_WIDTH + 100;
-    const height = TOP_MARGIN + 6 * STRING_SPACING + 100; // Increased for rhythm
+    // Ajustamos el ancho de columna en función del total de steps
+    let fretWidth = BASE_FRET_WIDTH;
+    let naturalWidth = LEFT_MARGIN + totalSteps * BASE_FRET_WIDTH + 100;
+
+    if (naturalWidth > MAX_CANVAS_WIDTH) {
+        fretWidth = (MAX_CANVAS_WIDTH - LEFT_MARGIN - 100) / totalSteps;
+        naturalWidth = LEFT_MARGIN + totalSteps * fretWidth + 100;
+        console.log(
+            "Canvas demasiado ancho, comprimiendo:",
+            { totalSteps, BASE_FRET_WIDTH, fretWidth, naturalWidth }
+        );
+    }
+
+    const width = naturalWidth;
+    const height = TOP_MARGIN + (6 * STRING_SPACING) + 100;
 
     canvas.width = width;
     canvas.height = height;
@@ -600,6 +624,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Background
     ctx.fillStyle = "#111";
     ctx.fillRect(0, 0, width, height);
+
+    console.log("canvas size", canvas.width, canvas.height);
 
     console.log("canvas element:", canvas);
     console.log("canvas getContext:", ctx);
@@ -621,7 +647,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (block.strings.length === 0) return;
         const blockLength = block.strings[0].length;
         callback(block, currentX);
-        currentX += blockLength * FRET_WIDTH;
+        currentX += blockLength * fretWidth;
       });
     }
 
@@ -642,7 +668,7 @@ document.addEventListener("DOMContentLoaded", async () => {
               k++;
             }
 
-            const x = currentX + i * FRET_WIDTH;
+            const x = currentX + i * fretWidth;
             ctx.fillStyle = "#aaa";
             ctx.font = "bold 16px Arial";
             ctx.textAlign = "center";
@@ -651,7 +677,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             // Skip processed digits
             i = k - 1;
           } else if (char === "|") {
-            const x = currentX + i * FRET_WIDTH;
+            const x = currentX + i * fretWidth;
             ctx.strokeStyle = "#444";
             ctx.lineWidth = 2;
             ctx.beginPath();
@@ -675,7 +701,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (block.strings[0][i] === "|") isMeasureBar = true;
 
         if (!isMeasureBar && i % 4 === 0) {
-          const x = currentX + i * FRET_WIDTH;
+          const x = currentX + i * fretWidth;
           ctx.strokeStyle = "#222";
           ctx.lineWidth = 1;
           ctx.beginPath();
@@ -703,8 +729,8 @@ document.addEventListener("DOMContentLoaded", async () => {
           } else if (char === "|" && inPM) {
             inPM = false;
             // Draw PM line
-            const startX = currentX + startIdx * FRET_WIDTH;
-            const endX = currentX + i * FRET_WIDTH;
+            const startX = currentX + startIdx * fretWidth;
+            const endX = currentX + i * fretWidth;
 
             ctx.strokeStyle = "#888";
             ctx.lineWidth = 2;
@@ -728,8 +754,8 @@ document.addEventListener("DOMContentLoaded", async () => {
           } else if (char === " " && inPM) {
             // End of PM without bar?
             inPM = false;
-            const startX = currentX + startIdx * FRET_WIDTH;
-            const endX = currentX + i * FRET_WIDTH;
+            const startX = currentX + startIdx * fretWidth;
+            const endX = currentX + i * fretWidth;
 
             ctx.strokeStyle = "#888";
             ctx.lineWidth = 2;
@@ -774,7 +800,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const line = block.rhythmStems;
         for (let i = 0; i < line.length; i++) {
           const ch = line[i];
-          const x = currentX + i * FRET_WIDTH;
+          const x = currentX + i * fretWidth;
 
           if (ch === "|") {
             // pequeña barra separadora bajo el pentagrama
@@ -806,7 +832,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
           const charIndex = match.index;
           const chordName = match[0];
-          const x = currentX + charIndex * FRET_WIDTH;
+          const x = currentX + charIndex * fretWidth;
 
           let minString = 5;
           let maxString = 0;
@@ -886,7 +912,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         for (let i = 0; i < line.length; i++) {
           const char = line[i];
-          const x = currentX + i * FRET_WIDTH;
+          const x = currentX + i * fretWidth;
 
           if (!isNaN(parseInt(char))) {
             if (chordPositions.has(i)) {
@@ -934,8 +960,8 @@ document.addEventListener("DOMContentLoaded", async () => {
               ctx.setLineDash([4, 4]);
               ctx.beginPath();
 
-              const startX = currentX + prevIndex * FRET_WIDTH;
-              const endX = currentX + nextIndex * FRET_WIDTH;
+              const startX = currentX + prevIndex * fretWidth;
+              const endX = currentX + nextIndex * fretWidth;
               const midX = (startX + endX) / 2;
               const noteRadius = 16; // Match the note circle radius
 
@@ -964,8 +990,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
             ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.moveTo(x - FRET_WIDTH / 2, y + 10);
-            ctx.lineTo(x + FRET_WIDTH / 2, y - 10);
+            ctx.moveTo(x - fretWidth / 2, y + 10);
+            ctx.lineTo(x + fretWidth / 2, y - 10);
             ctx.stroke();
             ctx.restore();
           }
