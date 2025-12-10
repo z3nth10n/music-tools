@@ -387,6 +387,10 @@ function createEngine(options = {}) {
     };
   };
 
+  engine.getCurrentTime = function () {
+    return getAudioContext().currentTime;
+  };
+
   return engine;
 }
 
