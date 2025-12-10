@@ -709,20 +709,27 @@ const deleteChordBtn = document.getElementById("deleteChordBtn");
 // Advanced Settings DOM
 // Elements are fetched in initAdvancedSettings to ensure availability
 
-const tabAudioEngine = window.PlayTab
-  ? window.PlayTab.createEngine({
+let tabAudioEngine = null;
+
+function ensureAudioEngine() {
+  if (!window.PlayTab) return null;
+  if (!tabAudioEngine) {
+    tabAudioEngine = window.PlayTab.createEngine({
       soundProfile: state.soundProfile,
       advanced: state.advanced,
-    })
-  : null;
+    });
+    tabAudioEngine
+      .preloadSamples()
+      .catch((err) => console.warn("Unable to preload guitar samples", err));
+  }
+  return tabAudioEngine;
+}
+
+ensureAudioEngine();
 
 // --- Initialization ---
 async function renderChordLibrary() {
-  if (tabAudioEngine) {
-    tabAudioEngine.preloadSamples().catch((err) =>
-      console.warn("Unable to preload guitar samples", err)
-    );
-  }
+  ensureAudioEngine();
 
   // Set translation prefix
   if (window.setTranslationPrefix) {
@@ -819,8 +826,9 @@ async function renderChordLibrary() {
     soundSelect.addEventListener("change", async (e) => {
       state.soundProfile = e.target.value;
       localStorage.setItem("guitar_sound_profile", state.soundProfile);
-      if (tabAudioEngine) {
-        await tabAudioEngine.setSoundProfile(state.soundProfile);
+      const engine = ensureAudioEngine();
+      if (engine) {
+        await engine.setSoundProfile(state.soundProfile);
       }
     });
   }
@@ -947,7 +955,11 @@ function init() {
 }
 
 async function playCurrentChord() {
-  if (!tabAudioEngine) return;
+  const engine = ensureAudioEngine();
+  if (!engine) {
+    console.warn("Audio engine not ready yet");
+    return;
+  }
 
   let currentChord;
   if (state.isCustomMode && state.customChord) {
@@ -962,7 +974,7 @@ async function playCurrentChord() {
   const tuningLowToHigh = [...state.currentTuning].reverse();
 
   try {
-    await tabAudioEngine.playChord({
+    await engine.playChord({
       frets: currentChord.frets,
       tuning: tuningLowToHigh,
       duration: 3.5,
@@ -1707,8 +1719,9 @@ function saveAdvancedSettings() {
     "guitar_advanced_settings",
     JSON.stringify(state.advanced)
   );
-  if (tabAudioEngine) {
-    tabAudioEngine.setAdvancedSettings(state.advanced);
+  const engine = ensureAudioEngine();
+  if (engine) {
+    engine.setAdvancedSettings(state.advanced);
   }
 }
 

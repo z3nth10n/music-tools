@@ -45,14 +45,22 @@ const CONSTS = window.GUITAR_CONSTS || {};
 async function renderVisualTab() {
   let currentNotation = "english";
 
-  const tabAudioEngine = window.PlayTab
-    ? window.PlayTab.createEngine({ soundProfile: "guitar-clean" })
-    : null;
-  if (tabAudioEngine) {
-    tabAudioEngine.preloadSamples().catch((err) =>
-      console.warn("Unable to preload tab samples", err)
-    );
+  let tabAudioEngine = null;
+
+  function ensureAudioEngine() {
+    if (!window.PlayTab) return null;
+    if (!tabAudioEngine) {
+      tabAudioEngine = window.PlayTab.createEngine({
+        soundProfile: "guitar-clean",
+      });
+      tabAudioEngine
+        .preloadSamples()
+        .catch((err) => console.warn("Unable to preload tab samples", err));
+    }
+    return tabAudioEngine;
   }
+
+  ensureAudioEngine();
 
   let currentBlocks = null;
   let isPlaying = false;
@@ -241,7 +249,8 @@ async function renderVisualTab() {
   }
 
   async function startPlayback() {
-    if (!tabAudioEngine || !currentBlocks || !currentBlocks.length) return;
+    const engine = ensureAudioEngine();
+    if (!engine || !currentBlocks || !currentBlocks.length) return;
     const bpmValue =
       currentTab && currentTab.bpm ? parseFloat(currentTab.bpm) : null;
     const timeline = buildPlaybackTimeline(
@@ -257,7 +266,7 @@ async function renderVisualTab() {
     stopPlayback();
 
     try {
-      const controller = await tabAudioEngine.playSequence(timeline.events);
+      const controller = await engine.playSequence(timeline.events);
       if (!controller) {
         console.warn("Playback engine did not return a controller");
         return;
