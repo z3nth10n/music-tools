@@ -879,7 +879,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const isFirstChunk = chunkIndex === 0;
 
     const BASE_FRET_WIDTH = 40;
-    const COMPACT_FRET_WIDTH = 20; // Ancho reducido para compases vacíos
+    const COMPACT_FRET_WIDTH = 1; // Ancho reducido para compases vacíos
     const STRING_SPACING = 40;
     const TOP_MARGIN = 100; // Increased for measure numbers
     const LEFT_MARGIN = isFirstChunk ? 60 : 20;
