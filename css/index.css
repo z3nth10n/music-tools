@@ -93,13 +93,13 @@
   margin: 0;
 }
 
-.lang-selector {
+.prop-selector {
   position: absolute;
   top: 24px;
   left: 24px;
 }
 
-.lang-selector select {
+.prop-selector select {
   background: var(--bg-alt);
   backdrop-filter: blur(4px);
   color: var(--text);
@@ -112,12 +112,12 @@
   transition: all 0.2s ease;
 }
 
-.lang-selector select:hover {
+.prop-selector select:hover {
   background: rgba(30, 41, 59, 0.8);
   border-color: rgba(148, 163, 184, 0.4);
 }
 
-.lang-selector select:focus {
+.prop-selector select:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px var(--accent-soft);
 }
@@ -191,7 +191,7 @@
     grid-template-columns: 1fr;
   }
   
-  .lang-selector {
+  .prop-selector {
     position: static;
     margin-bottom: 2rem;
     display: inline-block;

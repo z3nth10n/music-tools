@@ -221,7 +221,7 @@ canvas {
 }
 
 /* Language Selector */
-.lang-selector {
+.prop-selector {
   position: relative !important;
   margin-bottom: 35px;
   z-index: 10;
@@ -229,7 +229,7 @@ canvas {
   gap: 10px;
 }
 
-.lang-selector select {
+.prop-selector select {
   background: var(--bg-alt);
   backdrop-filter: blur(4px);
   color: var(--text);
@@ -243,17 +243,17 @@ canvas {
   height: 36px;
 }
 
-.lang-selector select option {
+.prop-selector select option {
   background-color: var(--bg-alt);
   color: var(--text);
 }
 
-.lang-selector select:hover {
+.prop-selector select:hover {
   background: var(--surface-hover);
   border-color: var(--accent);
 }
 
-.lang-selector select:focus {
+.prop-selector select:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px var(--accent-soft);
 }
@@ -346,7 +346,7 @@ canvas {
 
 /* Mobile adjustment */
 @media (max-width: 600px) {
-  .lang-selector {
+  .prop-selector {
     position: relative;
     top: 0;
     left: 0;
@@ -355,10 +355,9 @@ canvas {
     justify-content: flex-start;
   }
   
-  .lang-selector select {
+  .prop-selector select {
     height: 32px;
     padding: 0 12px;
     font-size: 12px;
   }
 }
-
