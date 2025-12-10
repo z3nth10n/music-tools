@@ -267,8 +267,6 @@ if (!window.__COMPONENT_ROUTER_ACTIVE) {
 
 window.renderChordByFret = renderChordByFret;
 
-})();
-
 function buildStringTuningOptions() {
   const stringTunings = document.querySelectorAll(".string-tuning");
   stringTunings.forEach((sel, index) => {
@@ -645,3 +643,5 @@ function saveCurrentTuning() {
   populateTuningSelect(selectedValue);
   applySelectedTuning();
 }
+
+})();
