@@ -103,6 +103,8 @@ async function renderVisualTab() {
   const notationSelect = document.getElementById("notationSelect");
   const showChordsCheckbox = document.getElementById("showChordsCheckbox");
   const soundSelect = document.getElementById("soundSelect");
+  const tabVariantSelect = document.getElementById("tabVariantSelect");
+  const tabVariantContainer = document.getElementById("tabVariantContainer");
 
   // Show Chords Logic
   let showChords = true;
@@ -117,13 +119,8 @@ async function renderVisualTab() {
       showChords = e.target.checked;
       localStorage.setItem("portal_showChords", showChords);
       // Re-render if a tab is active
-      if (currentTab && currentTab.content) {
-        const parsedData = parseTabContent(currentTab.content);
-        currentBlocks = parsedData.blocks;
-        if (parsedData.stringTunings) {
-          currentTab.stringTunings = parsedData.stringTunings;
-        }
-        renderVisualTab(parsedData.blocks);
+      if (currentBlocks && currentBlocks.length) {
+        renderVisualTab(currentBlocks);
       }
     });
   }
@@ -200,6 +197,15 @@ async function renderVisualTab() {
     });
   }
 
+  if (tabVariantSelect) {
+    tabVariantSelect.addEventListener("change", (e) => {
+      const idx = parseInt(e.target.value, 10);
+      if (!isNaN(idx)) {
+        setActiveTabSection(idx);
+      }
+    });
+  }
+
   // Initial load
   if (window.loadTranslations) {
     window.loadTranslations(userLang).then(() => updatePlayButton());
@@ -211,6 +217,8 @@ async function renderVisualTab() {
   const playerContainer = document.getElementById("player-container");
   const backButton = document.getElementById("back-to-selection");
   const playButton = document.getElementById("play-tab-btn");
+  const songTitleEl = document.getElementById("current-song-title");
+  const songMetaEl = document.getElementById("current-artist-name");
 
   // Base canvas plus wrapper for multi-chunk rendering
   const canvasWrapper = document.querySelector(".canvas-wrapper");
@@ -231,6 +239,9 @@ async function renderVisualTab() {
   let playheadAnimationId = null;
   let playheadTimelineDuration = 0;
   let activePlayheadChunk = -1;
+  let currentTabSections = [];
+  let currentSectionIndex = 0;
+  let currentVariantLabel = "";
   const PLAYBACK_OFFSET = 0.05;
   let isPreRenderingChunks = false;
 
@@ -527,6 +538,53 @@ async function renderVisualTab() {
     }
   }
 
+  function updateVariantSelectorOptions() {
+    if (!tabVariantSelect || !tabVariantContainer) return;
+    if (!currentTabSections || currentTabSections.length <= 1) {
+      tabVariantContainer.style.display = "none";
+      tabVariantSelect.innerHTML = "";
+      return;
+    }
+    tabVariantContainer.style.display = "flex";
+    tabVariantSelect.innerHTML = currentTabSections
+      .map((section, idx) => {
+        const label = section.label || `Part ${idx + 1}`;
+        return `<option value="${idx}">${label}</option>`;
+      })
+      .join("");
+    tabVariantSelect.value = String(currentSectionIndex);
+  }
+
+  function setActiveTabSection(index) {
+    if (!currentTabSections || !currentTabSections.length) return;
+    stopPlayback();
+    const targetIndex = Math.max(
+      0,
+      Math.min(index, currentTabSections.length - 1)
+    );
+    const section = currentTabSections[targetIndex];
+    if (!section) return;
+    currentSectionIndex = targetIndex;
+    const label = section.label || `Part ${targetIndex + 1}`;
+    currentVariantLabel =
+      currentTabSections.length > 1 ? label : "";
+    currentBlocks = section.blocks;
+    currentTab.stringTunings = section.stringTunings || null;
+    renderVisualTab(section.blocks);
+    updateVariantSelectorOptions();
+    updateSongMeta();
+  }
+
+  function updateSongMeta() {
+    if (!songMetaEl || !currentTab) return;
+    const parts = [];
+    if (currentTab.artist) parts.push(currentTab.artist);
+    if (currentTab.bpm) parts.push(`BPM: ${currentTab.bpm}`);
+    if (currentTab.timeSig) parts.push(`Time: ${currentTab.timeSig}`);
+    if (currentVariantLabel) parts.push(currentVariantLabel);
+    songMetaEl.textContent = parts.length ? parts.join(" | ") : "";
+  }
+
   updatePlayButton();
 
   let currentTab = null;
@@ -538,6 +596,10 @@ async function renderVisualTab() {
   backButton.addEventListener("click", () => {
     stopPlayback();
     currentBlocks = null;
+    currentTabSections = [];
+    currentSectionIndex = 0;
+    currentVariantLabel = "";
+    updateVariantSelectorOptions();
     if (playButton) playButton.disabled = true;
     playerContainer.style.display = "none";
     selectionContainer.style.display = "block";
@@ -921,11 +983,11 @@ async function renderVisualTab() {
     }
     window.history.pushState({}, "", url);
 
-    document.getElementById("current-song-title").textContent = tab.song;
-    let artistText = tab.artist || "";
-    if (tab.bpm) artistText += ` | BPM: ${tab.bpm}`;
-    if (tab.timeSig) artistText += ` | Time: ${tab.timeSig}`;
-    document.getElementById("current-artist-name").textContent = artistText;
+    if (songTitleEl) {
+      songTitleEl.textContent = tab.song || "Untitled";
+    }
+    currentVariantLabel = "";
+    updateSongMeta();
 
     if (!tab.content) {
       console.warn("Tab has no content to render");
@@ -933,22 +995,31 @@ async function renderVisualTab() {
     }
 
     const parsedData = parseTabContent(tab.content);
-    currentBlocks = parsedData.blocks;
-    currentTab.stringTunings = parsedData.stringTunings || null;
+    currentTabSections =
+      parsedData.sections && parsedData.sections.length
+        ? parsedData.sections
+        : [
+            {
+              label: "Main",
+              blocks: parsedData.blocks,
+              stringTunings: parsedData.stringTunings || null,
+            },
+          ];
+    currentSectionIndex = 0;
+    updateVariantSelectorOptions();
+    setActiveTabSection(0);
     if (playButton) {
       playButton.disabled = false;
       updatePlayButton();
     }
-    renderVisualTab(parsedData.blocks);
   }
 
-  function parseTabContent(text) {
+  const TAB_STRING_REGEX = /^(?:[eBGDAE]|s\d+)\|/i;
+
+  function parseTabSectionText(text) {
     const lines = text.split("\n");
     const blocks = [];
     // Block structure: { strings: [], chords: null, pm: null, measureNums: null, rhythmStems: null, rhythmBeams: null }
-
-    // Regex for tab lines: e|-... or midi-coded s63|...
-    const stringRegex = /^(?:[eBGDAE]|s\d+)\|/i;
 
     let tempStrings = [];
     let tempChord = null;
@@ -976,7 +1047,7 @@ async function renderVisualTab() {
           });
         }
       }
-      if (stringRegex.test(trimmed)) {
+      if (TAB_STRING_REGEX.test(trimmed)) {
         foundStringSection = true;
         // If we already have 6 strings and find a new one, it's a new block
         if (tempStrings.length === 6) {
@@ -1021,7 +1092,7 @@ async function renderVisualTab() {
         tempMeasureNums = line;
       } else if (
         line.includes("|") &&
-        !stringRegex.test(line.trim()) &&
+        !TAB_STRING_REGEX.test(line.trim()) &&
         !line.includes("PM") &&
         !/\d/.test(line)
       ) {
@@ -1055,6 +1126,63 @@ async function renderVisualTab() {
     }
 
     return { blocks, stringTunings };
+  }
+
+  function parseTabContent(text) {
+    const lines = text.split("\n");
+    const sections = [];
+    let buffer = [];
+    let currentLabel = null;
+
+    const hasStringData = (linesArr) =>
+      linesArr.some((ln) => TAB_STRING_REGEX.test(ln.trim()));
+
+    const pushSection = () => {
+      if (!buffer.length || !hasStringData(buffer)) {
+        buffer = [];
+        currentLabel = null;
+        return;
+      }
+      const parsed = parseTabSectionText(buffer.join("\n"));
+      const label =
+        currentLabel ||
+        (sections.length ? `Part ${sections.length + 1}` : "Main Section");
+      sections.push({
+        label,
+        blocks: parsed.blocks,
+        stringTunings: parsed.stringTunings,
+      });
+      buffer = [];
+      currentLabel = null;
+    };
+
+    lines.forEach((line) => {
+      if (/^\s*Instrument\s*:/i.test(line)) {
+        pushSection();
+        currentLabel =
+          line.split(":").slice(1).join(":").trim() ||
+          `Instrument ${sections.length + 1}`;
+      } else {
+        buffer.push(line);
+      }
+    });
+
+    pushSection();
+
+    if (!sections.length) {
+      const fallback = parseTabSectionText(text);
+      sections.push({
+        label: "Main",
+        blocks: fallback.blocks,
+        stringTunings: fallback.stringTunings,
+      });
+    }
+
+    return {
+      sections,
+      blocks: sections[0].blocks,
+      stringTunings: sections[0].stringTunings,
+    };
   }
 
   function extractMidiFromStringLine(line) {
