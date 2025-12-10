@@ -46,16 +46,33 @@ async function renderVisualTab() {
   let currentNotation = "english";
 
   let tabAudioEngine = null;
+  let appliedSoundProfile = null;
+  let currentSoundProfile =
+    localStorage.getItem("guitar_sound_profile") || "guitar-clean";
 
   function ensureAudioEngine() {
     if (!window.PlayTab) return null;
     if (!tabAudioEngine) {
       tabAudioEngine = window.PlayTab.createEngine({
-        soundProfile: "guitar-clean",
+        soundProfile: currentSoundProfile,
       });
+      appliedSoundProfile = currentSoundProfile;
       tabAudioEngine
         .preloadSamples()
         .catch((err) => console.warn("Unable to preload tab samples", err));
+    } else if (
+      currentSoundProfile &&
+      currentSoundProfile !== appliedSoundProfile &&
+      typeof tabAudioEngine.setSoundProfile === "function"
+    ) {
+      tabAudioEngine
+        .setSoundProfile(currentSoundProfile)
+        .then(() => {
+          appliedSoundProfile = currentSoundProfile;
+        })
+        .catch((err) =>
+          console.warn("Unable to update tab sound profile", err)
+        );
     }
     return tabAudioEngine;
   }
@@ -85,6 +102,7 @@ async function renderVisualTab() {
     document.getElementById("langSelect");
   const notationSelect = document.getElementById("notationSelect");
   const showChordsCheckbox = document.getElementById("showChordsCheckbox");
+  const soundSelect = document.getElementById("soundSelect");
 
   // Show Chords Logic
   let showChords = true;
@@ -158,6 +176,23 @@ async function renderVisualTab() {
 
       if (currentTab) {
         playTab(currentTab);
+      }
+    });
+  }
+
+  if (soundSelect) {
+    soundSelect.value = currentSoundProfile;
+    soundSelect.addEventListener("change", async (e) => {
+      currentSoundProfile = e.target.value;
+      localStorage.setItem("guitar_sound_profile", currentSoundProfile);
+      const engine = ensureAudioEngine();
+      if (engine && typeof engine.setSoundProfile === "function") {
+        try {
+          await engine.setSoundProfile(currentSoundProfile);
+          appliedSoundProfile = currentSoundProfile;
+        } catch (err) {
+          console.warn("Unable to apply selected sound profile", err);
+        }
       }
     });
   }

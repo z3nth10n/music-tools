@@ -189,10 +189,10 @@
   max-width: 1100px;
 }
 
-.component-active #component-view .lang-selector,
+/* .component-active #component-view .lang-selector,
 .component-active #component-view .back-button {
   display: none !important;
-}
+} */
 
 .route-error {
   background: var(--card-bg);

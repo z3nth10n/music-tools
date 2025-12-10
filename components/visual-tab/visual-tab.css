@@ -222,9 +222,8 @@ canvas {
 
 /* Language Selector */
 .lang-selector {
-  position: absolute;
-  top: 20px;
-  right: 20px;
+  position: relative !important;
+  margin-bottom: 35px;
   z-index: 10;
   display: flex;
   gap: 10px;

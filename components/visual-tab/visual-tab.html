@@ -9,11 +9,11 @@
   <link rel="stylesheet" href="./visual-tab.css">
 </head>
 <body>
-  <a href="../../index.html" class="back-button" aria-label="Back to Home" data-route="home">
+  <!-- <a href="../../index.html" class="back-button" aria-label="Back to Home" data-route="home">
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M19 12H5M12 19l-7-7 7-7"/>
     </svg>
-  </a>
+  </a> -->
 
   <div class="app">
     <div class="lang-selector">
@@ -24,6 +24,13 @@
       <select id="notationSelect">
         <option value="english">English (C, D, E)</option>
         <option value="latin">Latin (Do, Re, Mi)</option>
+      </select>
+      <label for="soundSelect" data-i18n="label_sound_profile">Sound:</label>
+      <select id="soundSelect">
+        <option value="guitar-clean" data-i18n="sound_clean">Clean Guitar</option>
+        <option value="guitar-jazz" data-i18n="sound_jazz">Jazz Guitar</option>
+        <option value="guitar-dist1" data-i18n="sound_dist1">Distortion 1</option>
+        <option value="guitar-dist2" data-i18n="sound_dist2">Distortion 2</option>
       </select>
     </div>
 
