@@ -7,10 +7,24 @@ window.addEventListener("unhandledrejection", (event) => {
 });
 
 function drawErrorOnCanvas(msg) {
-    canvas.width = 800;
-    canvas.height = 200;
+    // Canvas base + wrapper para multi-chunk
+    const canvasWrapper = document.querySelector(".canvas-wrapper");
+    const baseCanvas = document.getElementById("tab-canvas");
+
+    if (!canvasWrapper || !baseCanvas) return;
+
+    canvasWrapper.innerHTML = "";
+    const errorCanvas = baseCanvas;
+    errorCanvas.width = 800;
+    errorCanvas.height = 200;
+    canvasWrapper.appendChild(errorCanvas);
+
+    // Reasignamos globales para que funcionen otras cosas si fuera necesario
+    // aunque aquí solo pintamos el error
+    const ctx = errorCanvas.getContext("2d");
+
     ctx.fillStyle = "#200";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, errorCanvas.width, errorCanvas.height);
     ctx.fillStyle = "#f88";
     ctx.font = "16px monospace";
     ctx.fillText(msg, 10, 50);
@@ -93,8 +107,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   const selectionContainer = document.getElementById("selection-container");
   const playerContainer = document.getElementById("player-container");
   const backButton = document.getElementById("back-to-selection");
-  const canvas = document.getElementById("tab-canvas");
-  const ctx = canvas.getContext("2d");
+
+  // Canvas base + wrapper para multi-chunk
+  const canvasWrapper = document.querySelector(".canvas-wrapper");
+  const baseCanvas = document.getElementById("tab-canvas");
+
+  // Estas dos se irán reasignando al canvas del chunk que toque
+  let canvas = baseCanvas;
+  let ctx = canvas.getContext("2d");
+
+  // Para poder saber qué chunks tenemos
+  let currentChunks = []; // array de { canvas, blocks }
 
   const accordionContainer = document.getElementById("accordion-container");
   const searchInput = document.getElementById("songsterr-search");
@@ -575,8 +598,44 @@ document.addEventListener("DOMContentLoaded", async () => {
     return blocks;
   }
 
-  function renderVisualTab(blocks) {
-    console.log("renderVisualTab blocks:", blocks);
+  // Divide los bloques en "trozos" horizontales por columnas
+  // Para simplificar: cortamos cada N columnas, aunque pille compases a medias.
+  // Más adelante se puede refinar para cortar justo en '|' de measureNums.
+  const COLUMNS_PER_CHUNK = 200; // ajusta a gusto
+
+  function createChunks(blocks) {
+    const chunks = [];
+    if (!blocks || !blocks.length) return chunks;
+
+    // De momento asumimos 1 bloque grande (que es tu caso actual)
+    blocks.forEach((block) => {
+      if (!block.strings || !block.strings.length) return;
+
+      const length = block.strings[0].length;
+
+      for (let start = 0; start < length; start += COLUMNS_PER_CHUNK) {
+        const end = Math.min(length, start + COLUMNS_PER_CHUNK);
+
+        const sliceLine = (line) => (line ? line.slice(start, end) : null);
+
+        const chunkBlock = {
+          strings: block.strings.map(sliceLine),
+          chords: sliceLine(block.chords),
+          pm: sliceLine(block.pm),
+          measureNums: sliceLine(block.measureNums),
+          rhythmStems: sliceLine(block.rhythmStems),
+          rhythmBeams: sliceLine(block.rhythmBeams),
+        };
+
+        chunks.push([chunkBlock]); // cada chunk es un array de blocks (para reutilizar la lógica)
+      }
+    });
+
+    return chunks;
+  }
+
+  function renderChunk(blocks) {
+    console.log("renderChunk blocks:", blocks);
 
     const BASE_FRET_WIDTH = 40;
     const STRING_SPACING = 40;
@@ -997,6 +1056,56 @@ document.addEventListener("DOMContentLoaded", async () => {
           }
         }
       }
+    });
+  }
+
+  // Renderiza la tablatura completa creando varios canvas (uno por chunk)
+  function renderVisualTab(blocks) {
+    console.log("renderVisualTab (multi-chunk) blocks:", blocks);
+
+    if (!canvasWrapper || !baseCanvas) {
+      console.error("No canvas wrapper or base canvas found");
+      return;
+    }
+
+    // Limpiar canvases anteriores del wrapper
+    canvasWrapper.innerHTML = "";
+
+    // Crear los chunks
+    const chunks = createChunks(blocks);
+    if (!chunks.length) {
+      console.warn("No chunks generated, nothing to render");
+      return;
+    }
+
+    currentChunks = [];
+
+    chunks.forEach((chunkBlocks, index) => {
+      let chunkCanvas;
+
+      if (index === 0) {
+        // Reutilizamos el canvas base
+        chunkCanvas = baseCanvas;
+      } else {
+        // Clonamos el base SIN hijos ni contenido
+        chunkCanvas = baseCanvas.cloneNode(false);
+        // Evitamos IDs duplicados
+        chunkCanvas.removeAttribute("id");
+      }
+
+      chunkCanvas.classList.add("tab-canvas-chunk");
+      canvasWrapper.appendChild(chunkCanvas);
+
+      currentChunks.push({ canvas: chunkCanvas, blocks: chunkBlocks });
+    });
+
+    // De momento renderizamos todos los chunks de golpe.
+    // Más adelante se puede meter un IntersectionObserver para lazy-load.
+    currentChunks.forEach(({ canvas: chunkCanvas, blocks: chunkBlocks }, idx) => {
+      canvas = chunkCanvas;
+      ctx = canvas.getContext("2d");
+      console.log("Rendering chunk", idx, "into canvas", chunkCanvas);
+      renderChunk(chunkBlocks);
     });
   }
 

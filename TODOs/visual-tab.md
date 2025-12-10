@@ -1,8 +1,11 @@
-* Host the API on a free hosting service
-* Be able to access it from my GitHub Pages
-* Add a search engine (https://github.com/Metaphysics0/songsterr-downloader/blob/main/src/lib/server/services/songsterr.service.ts)
-* Make searched songs get added to localStorage and appear again
-* Make the tablatures I'm currently rendering work with the new features
+* [Ok] Host the API on a free hosting service
+* [Ok] Be able to access it from my GitHub Pages
+* [Ok] Add a search engine (https://github.com/Metaphysics0/songsterr-downloader/blob/main/src/lib/server/services/songsterr.service.ts)
+* [Ok] Make searched songs get added to localStorage and appear again
+* [Ok] Make the tablatures I'm currently rendering work with the new features
+
+* If the tablature is very long, load it in chunks (10 measures at a time)
+* Play tabs (with sound)
 
 * Fix visual issues on mobile
 
@@ -15,7 +18,6 @@
 * Allow selecting the playing tempo or setting a custom tempo (in a box in a corner, with a slider)
 * The bouncing ball that moves along as the measure progresses
 * The tablature should scroll as the song plays
-* If the tablature is very long, load it in chunks (10 measures at a time)
 * Good chord and note detection via microphone
 * Good chord detection from the tablature
 
