@@ -177,7 +177,6 @@ async function renderVisualTab() {
   // Base canvas plus wrapper for multi-chunk rendering
   const canvasWrapper = document.querySelector(".canvas-wrapper");
   const baseCanvas = document.getElementById("tab-canvas");
-  let playheadLine = null;
 
   // These two references are reassigned to whichever chunk canvas is active
   let canvas = baseCanvas;
@@ -193,6 +192,7 @@ async function renderVisualTab() {
   let playheadAnchorTime = 0;
   let playheadAnimationId = null;
   let playheadTimelineDuration = 0;
+  let activePlayheadChunk = -1;
   const PLAYBACK_OFFSET = 0.05;
   let isPreRenderingChunks = false;
 
@@ -257,19 +257,6 @@ async function renderVisualTab() {
     }
   }
 
-  function ensurePlayheadOverlay() {
-    if (!canvasWrapper) return;
-    if (!playheadLine) {
-      playheadLine = document.createElement("div");
-      playheadLine.className = "playhead-line";
-      playheadLine.style.display = "none";
-    }
-    if (playheadLine.parentElement !== canvasWrapper) {
-      canvasWrapper.appendChild(playheadLine);
-    }
-  }
-  ensurePlayheadOverlay();
-
   function stopPlayback() {
     resetPlaybackState();
   }
@@ -293,15 +280,17 @@ async function renderVisualTab() {
     let offset = 0;
     currentChunks.forEach((info) => {
       info.absOffset = offset;
-      const chunkWidth =
-        typeof info.width === "number"
-          ? info.width
-          : info.canvas
-          ? info.canvas.width
-          : 0;
+      const chunkWidth = getChunkWidth(info);
       offset += chunkWidth;
     });
     totalCanvasWidth = offset;
+  }
+
+  function getChunkWidth(info) {
+    if (!info) return 0;
+    if (typeof info.width === "number" && info.width > 0) return info.width;
+    if (info.canvas && info.canvas.width) return info.canvas.width;
+    return 0;
   }
 
   function stopPlayheadAnimation() {
@@ -309,14 +298,21 @@ async function renderVisualTab() {
       cancelAnimationFrame(playheadAnimationId);
       playheadAnimationId = null;
     }
-    if (playheadLine) {
-      playheadLine.style.display = "none";
-    }
+    hideAllChunkPlayheads();
+  }
+
+  function hideAllChunkPlayheads() {
+    activePlayheadChunk = -1;
+    currentChunks.forEach((info) => {
+      if (info.playheadLine) {
+        info.playheadLine.style.display = "none";
+      }
+    });
   }
 
   function startPlayheadAnimationLoop() {
-    if (!playheadLine || !canvasWrapper || !playheadPositions.length) return;
-    playheadLine.style.display = "block";
+    if (!canvasWrapper || !playheadPositions.length) return;
+    hideAllChunkPlayheads();
     const engine = ensureAudioEngine();
 
     const step = () => {
@@ -343,9 +339,25 @@ async function renderVisualTab() {
   }
 
   function positionPlayhead(absoluteX) {
-    if (!playheadLine || !canvasWrapper) return;
-    const relativeLeft = absoluteX - canvasWrapper.scrollLeft;
-    playheadLine.style.left = `${relativeLeft}px`;
+    if (!canvasWrapper || !currentChunks.length) return;
+    const resolved = resolveChunkForAbsoluteX(absoluteX);
+    if (!resolved) return;
+    const { chunkIndex, localX } = resolved;
+    const info = currentChunks[chunkIndex];
+    if (!info || !info.playheadLine) return;
+
+    if (activePlayheadChunk !== chunkIndex) {
+      if (activePlayheadChunk >= 0) {
+        const prevInfo = currentChunks[activePlayheadChunk];
+        if (prevInfo && prevInfo.playheadLine) {
+          prevInfo.playheadLine.style.display = "none";
+        }
+      }
+      activePlayheadChunk = chunkIndex;
+    }
+
+    info.playheadLine.style.display = "block";
+    info.playheadLine.style.left = `${localX}px`;
 
     const targetScroll = Math.max(
       0,
@@ -357,16 +369,57 @@ async function renderVisualTab() {
     canvasWrapper.scrollLeft += (targetScroll - canvasWrapper.scrollLeft) * 0.2;
   }
 
+  function resolveChunkForAbsoluteX(x) {
+    if (!currentChunks.length) return null;
+    const clamped = Math.max(0, Math.min(totalCanvasWidth, x));
+    const tested = new Set();
+
+    const checkChunk = (idx) => {
+      if (idx < 0 || idx >= currentChunks.length || tested.has(idx)) {
+        return null;
+      }
+      tested.add(idx);
+      const info = currentChunks[idx];
+      if (!info) return null;
+      const width = getChunkWidth(info);
+      if (!width) return null;
+      const start = info.absOffset || 0;
+      const end = start + width;
+      if (clamped >= start && clamped <= end + 0.5) {
+        return {
+          chunkIndex: idx,
+          localX: clamped - start,
+        };
+      }
+      return null;
+    };
+
+    if (activePlayheadChunk >= 0) {
+      const immediate = checkChunk(activePlayheadChunk);
+      if (immediate) return immediate;
+      const ahead = checkChunk(activePlayheadChunk + 1);
+      if (ahead) return ahead;
+      const behind = checkChunk(activePlayheadChunk - 1);
+      if (behind) return behind;
+    }
+
+    for (let i = 0; i < currentChunks.length; i++) {
+      const result = checkChunk(i);
+      if (result) return result;
+    }
+    return null;
+  }
+
   function getVisualXForTime(time) {
     if (!playheadPositions.length) return null;
     if (time <= playheadPositions[0].time) {
       playheadPositionIndex = 0;
-      return playheadPositions[0].x ?? 0;
+      return playheadPositions[0].absoluteX ?? 0;
     }
     const lastIdx = playheadPositions.length - 1;
     if (time >= playheadPositions[lastIdx].time) {
       playheadPositionIndex = lastIdx;
-      return playheadPositions[lastIdx].x ?? totalCanvasWidth;
+      return playheadPositions[lastIdx].absoluteX ?? totalCanvasWidth;
     }
     while (
       playheadPositionIndex < lastIdx - 1 &&
@@ -376,13 +429,17 @@ async function renderVisualTab() {
     }
     const current = playheadPositions[playheadPositionIndex];
     const next = playheadPositions[Math.min(playheadPositionIndex + 1, lastIdx)];
-    if (!current || !next) return current ? current.x : null;
+    if (!current || !next) {
+      return current ? current.absoluteX ?? null : null;
+    }
     const span = next.time - current.time || 0.0001;
     const ratio = Math.max(
       0,
       Math.min(1, (time - current.time) / span)
     );
-    return (current.x ?? 0) + ((next.x ?? current.x ?? 0) - (current.x ?? 0)) * ratio;
+    const currX = current.absoluteX ?? 0;
+    const nextX = next.absoluteX ?? currX;
+    return currX + (nextX - currX) * ratio;
   }
 
   async function startPlayback() {
@@ -1183,13 +1240,12 @@ async function renderVisualTab() {
             defaultDuration;
           const sustain = Math.max(duration * 0.95, 0.35);
           const midis = collectColumnMidis(block, colIndex);
-          const visualX = getColumnVisualPosition(
-            chunkIndex,
-            block,
-            colIndex
-          );
-          if (visualX !== null) {
-            positions.push({ time: cursor, x: visualX });
+          const columnPos = getColumnPosition(chunkIndex, block, colIndex);
+          if (columnPos) {
+            positions.push({
+              time: cursor,
+              absoluteX: columnPos.absoluteX,
+            });
           }
           if (midis.length) {
             events.push({
@@ -1273,9 +1329,12 @@ async function renderVisualTab() {
       }
       const sustain = Math.max(duration * 0.92, 0.25);
 
-      const visualX = getColumnVisualPosition(chunkIndex, block, i);
-      if (visualX !== null) {
-        positions.push({ time: cursor, x: visualX });
+      const columnPos = getColumnPosition(chunkIndex, block, i);
+      if (columnPos) {
+        positions.push({
+          time: cursor,
+          absoluteX: columnPos.absoluteX,
+        });
       }
 
       if (lower !== "r") {
@@ -1299,7 +1358,14 @@ async function renderVisualTab() {
     return cursor;
   }
 
-  function getColumnVisualPosition(chunkIndex, block, columnIndex) {
+  function getColumnPosition(chunkIndex, block, columnIndex) {
+    return (
+      getPreciseColumnPosition(chunkIndex, block, columnIndex) ||
+      getApproxColumnPosition(chunkIndex, block, columnIndex)
+    );
+  }
+
+  function getPreciseColumnPosition(chunkIndex, block, columnIndex) {
     const info = currentChunks[chunkIndex];
     if (!info || !info.blockLayouts) return null;
     const layout = info.blockLayouts.get(block);
@@ -1309,8 +1375,27 @@ async function renderVisualTab() {
     const columnWidth = layout.columnWidths[columnIndex] || 0;
     const leftMargin = info.leftMargin || 0;
     const scale = info.scale || 1;
-    const base = (info.absOffset || 0) + leftMargin + columnX * scale;
-    return base + (columnWidth * scale) / 2;
+    const local =
+      leftMargin + columnX * scale + (columnWidth * scale) / 2;
+    return {
+      absoluteX: (info.absOffset || 0) + local,
+      localX: local,
+    };
+  }
+
+  function getApproxColumnPosition(chunkIndex, block, columnIndex) {
+    const info = currentChunks[chunkIndex];
+    if (!info) return null;
+    const width = getChunkWidth(info);
+    if (!width) return null;
+    const line = block && block.strings && block.strings[0];
+    const len = line ? line.length : 0;
+    const ratio = len ? Math.max(0, Math.min(1, columnIndex / len)) : 0;
+    const local = ratio * width;
+    return {
+      absoluteX: (info.absOffset || 0) + local,
+      localX: local,
+    };
   }
 
   function collectColumnMidis(block, index) {
@@ -2090,6 +2175,7 @@ async function renderVisualTab() {
 
     currentChunks = [];
     playbackBlocks = [];
+    activePlayheadChunk = -1;
 
     chunks.forEach((chunkBlocks, index) => {
       let chunkCanvas;
@@ -2105,10 +2191,21 @@ async function renderVisualTab() {
       }
 
       chunkCanvas.classList.add("tab-canvas-chunk");
-      canvasWrapper.appendChild(chunkCanvas);
+      const chunkContainer = document.createElement("div");
+      chunkContainer.className = "tab-chunk-container";
+      chunkContainer.appendChild(chunkCanvas);
+
+      const chunkPlayheadLine = document.createElement("div");
+      chunkPlayheadLine.className = "playhead-line";
+      chunkPlayheadLine.style.display = "none";
+      chunkContainer.appendChild(chunkPlayheadLine);
+
+      canvasWrapper.appendChild(chunkContainer);
 
       currentChunks.push({
         canvas: chunkCanvas,
+        container: chunkContainer,
+        playheadLine: chunkPlayheadLine,
         blocks: chunkBlocks,
         rendered: false,
         blockLayouts: null,
@@ -2122,9 +2219,6 @@ async function renderVisualTab() {
         playbackBlocks.push({ chunkIndex: index, block });
       });
     });
-
-    // Re-append the playhead overlay so it's always on top of any rebuilt canvases
-    ensurePlayheadOverlay();
 
     // Disconnect any previously registered observer
     if (chunkObserver) {
@@ -2158,8 +2252,12 @@ async function renderVisualTab() {
             // console.log("Clearing chunk", idx);
             cctx.clearRect(0, 0, info.canvas.width, info.canvas.height);
             info.rendered = false;
-            info.blockLayouts = null;
-            info.width = 0;
+            if (info.playheadLine) {
+              info.playheadLine.style.display = "none";
+            }
+            if (activePlayheadChunk === idx) {
+              activePlayheadChunk = -1;
+            }
           }
         });
       },

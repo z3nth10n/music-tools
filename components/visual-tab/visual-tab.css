@@ -139,6 +139,16 @@
   border: 3px solid var(--bg-alt);
 }
 
+.tab-chunk-container {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+}
+
+.tab-chunk-container canvas {
+  flex: 0 0 auto;
+}
+
 canvas {
   display: block;
 }
@@ -352,5 +362,4 @@ canvas {
     font-size: 12px;
   }
 }
-
 
