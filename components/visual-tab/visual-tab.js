@@ -2135,10 +2135,18 @@ async function renderVisualTab() {
 
     const chunkInfo = currentChunks[chunkIndex];
     if (chunkInfo) {
+      const prevWidth = chunkInfo.width || 0;
+      const hadLayouts = !!chunkInfo.blockLayouts;
       chunkInfo.blockLayouts = blockLayouts;
       chunkInfo.scale = scale;
       chunkInfo.leftMargin = LEFT_MARGIN;
       chunkInfo.width = width;
+      if (Math.abs(prevWidth - width) > 1) {
+        recomputeChunkOffsets();
+      }
+      if (!hadLayouts || Math.abs(prevWidth - width) > 1) {
+        rebuildCurrentTimeline();
+      }
     }
 
     // Background
@@ -2611,6 +2619,52 @@ async function renderVisualTab() {
     });
   }
 
+  const CHUNK_APPROX_BASE_WIDTH = 40;
+  const CHUNK_APPROX_EXTRA_PADDING = 100;
+  const CHUNK_MIN_WIDTH = 400;
+  const CHUNK_MAX_WIDTH = 10000;
+
+  function getBlockMaxColumns(block) {
+    if (!block) return 0;
+    let maxLen = 0;
+    if (Array.isArray(block.strings)) {
+      block.strings.forEach((line) => {
+        if (typeof line === "string" && line.length > maxLen) {
+          maxLen = line.length;
+        }
+      });
+    }
+    ["measureNums", "rhythmStems", "rhythmBeams", "chords", "pm"].forEach(
+      (key) => {
+        const line = block[key];
+        if (typeof line === "string" && line.length > maxLen) {
+          maxLen = line.length;
+        }
+      }
+    );
+    return maxLen;
+  }
+
+  function estimateChunkWidth(blocks, chunkIndex) {
+    if (!Array.isArray(blocks) || !blocks.length) {
+      return CHUNK_MIN_WIDTH;
+    }
+    let maxColumns = 0;
+    blocks.forEach((block) => {
+      maxColumns = Math.max(maxColumns, getBlockMaxColumns(block));
+    });
+    if (!maxColumns) {
+      maxColumns = 32;
+    }
+    const leftMargin = chunkIndex === 0 ? 60 : 20;
+    let approxWidth =
+      leftMargin +
+      maxColumns * CHUNK_APPROX_BASE_WIDTH +
+      CHUNK_APPROX_EXTRA_PADDING;
+    approxWidth = Math.max(CHUNK_MIN_WIDTH, Math.min(CHUNK_MAX_WIDTH, approxWidth));
+    return approxWidth;
+  }
+
   // Render the entire tab by creating one canvas per chunk
   function renderVisualTab(blocks) {
     // console.log("renderVisualTab (multi-chunk) blocks:", blocks);
@@ -2659,6 +2713,7 @@ async function renderVisualTab() {
 
       canvasWrapper.appendChild(chunkContainer);
 
+      const approxWidth = estimateChunkWidth(chunkBlocks, index);
       currentChunks.push({
         canvas: chunkCanvas,
         container: chunkContainer,
@@ -2667,8 +2722,8 @@ async function renderVisualTab() {
         rendered: false,
         blockLayouts: null,
         scale: 1,
-        leftMargin: 0,
-        width: 0,
+        leftMargin: index === 0 ? 60 : 20,
+        width: approxWidth,
         absOffset: 0,
       });
 
@@ -2676,6 +2731,8 @@ async function renderVisualTab() {
         playbackBlocks.push({ chunkIndex: index, block });
       });
     });
+
+    recomputeChunkOffsets();
 
     // Disconnect any previously registered observer
     if (chunkObserver) {
