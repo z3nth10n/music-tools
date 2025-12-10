@@ -126,6 +126,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   let currentChunks = []; // array de { canvas, blocks }
   let chunkObserver = null;
 
+  // Tooltip element
+  let tooltipEl = document.createElement("div");
+  tooltipEl.className = "chord-tooltip";
+  document.body.appendChild(tooltipEl);
+
   const accordionContainer = document.getElementById("accordion-container");
   const searchInput = document.getElementById("songsterr-search");
   const searchResults = document.getElementById("search-results");
@@ -667,7 +672,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     return chunks;
   }
 
-  function renderChunk(blocks) {
+  function renderChunk(blocks, interactiveRegions = null) {
     // console.log("renderChunk blocks:", blocks);
 
     const BASE_FRET_WIDTH = 40;
@@ -983,6 +988,34 @@ document.addEventListener("DOMContentLoaded", async () => {
             blockTop + blockHeight / 2 + 8
           );
           ctx.shadowBlur = 0;
+
+          if (interactiveRegions) {
+            let frets = [];
+            // Collect frets for tooltip (High e to Low E)
+            for (let s = 0; s < 6; s++) {
+              // Collect frets for tooltip (Low E to High e)
+              // for (let s = 5; s >= 0; s--) {
+              if (s < block.strings.length) {
+                const char = block.strings[s][charIndex];
+                if (/[0-9]/.test(char)) {
+                  frets.push(char);
+                } else if (/[xX]/.test(char)) {
+                  frets.push("x");
+                } else {
+                  frets.push("x"); // Treat '-' or space as muted/not played
+                }
+              } else {
+                frets.push("x");
+              }
+            }
+            interactiveRegions.push({
+              x: x - 15,
+              y: blockTop,
+              w: w,
+              h: blockHeight,
+              tooltip: frets.join("-"),
+            });
+          }
         }
       }
     });
@@ -1156,7 +1189,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             canvas = info.canvas;
             ctx = info.canvas.getContext("2d");
             // console.log("Rendering chunk", idx, "into canvas", info.canvas);
-            renderChunk(info.blocks);
+            info.interactiveRegions = [];
+            renderChunk(info.blocks, info.interactiveRegions);
             info.rendered = true;
           } else if (!entry.isIntersecting && info.rendered) {
             // El chunk sale de la vista -> LO DESCARGAMOS
@@ -1178,6 +1212,45 @@ document.addEventListener("DOMContentLoaded", async () => {
     currentChunks.forEach((info, idx) => {
       info.canvas.dataset.chunkIndex = idx;
       chunkObserver.observe(info.canvas);
+    });
+
+    // Event listeners for tooltips
+    canvasWrapper.addEventListener("mousemove", (e) => {
+      if (
+        e.target.tagName === "CANVAS" &&
+        e.target.classList.contains("tab-canvas-chunk")
+      ) {
+        const chunkIdx = e.target.dataset.chunkIndex;
+        const chunkInfo = currentChunks[chunkIdx];
+        if (chunkInfo && chunkInfo.interactiveRegions) {
+          const canvasRect = e.target.getBoundingClientRect();
+          const mouseX = e.clientX - canvasRect.left;
+          const mouseY = e.clientY - canvasRect.top;
+
+          const region = chunkInfo.interactiveRegions.find(
+            (r) =>
+              mouseX >= r.x &&
+              mouseX <= r.x + r.w &&
+              mouseY >= r.y &&
+              mouseY <= r.y + r.h
+          );
+
+          if (region) {
+            tooltipEl.textContent = region.tooltip;
+            tooltipEl.style.display = "block";
+            tooltipEl.style.left = e.clientX + 10 + "px";
+            tooltipEl.style.top = e.clientY + 10 + "px";
+          } else {
+            tooltipEl.style.display = "none";
+          }
+        }
+      } else {
+        tooltipEl.style.display = "none";
+      }
+    });
+
+    canvasWrapper.addEventListener("mouseleave", () => {
+      tooltipEl.style.display = "none";
     });
   }
 

@@ -306,6 +306,23 @@ canvas {
   font-style: italic;
 }
 
+/* Tooltip for chords */
+.chord-tooltip {
+  position: fixed;
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: monospace;
+  pointer-events: none;
+  z-index: 10000;
+  display: none;
+  border: 1px solid #555;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  white-space: nowrap;
+}
+
 /* Mobile adjustment */
 @media (max-width: 600px) {
   .lang-selector {
