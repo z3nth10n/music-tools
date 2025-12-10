@@ -798,6 +798,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
+  function lightenColor(hex, factor = 0.25) {
+    if (!hex || typeof hex !== "string") return hex;
+    const normalized = hex.replace("#", "");
+    if (normalized.length !== 6) return hex;
+    const num = parseInt(normalized, 16);
+    const r = (num >> 16) & 0xff;
+    const g = (num >> 8) & 0xff;
+    const b = num & 0xff;
+    const lerp = (v) => Math.round(v + (255 - v) * factor);
+    return `rgb(${lerp(r)}, ${lerp(g)}, ${lerp(b)})`;
+  }
+
   function drawRhythmSymbol(ctx, ch, x, baselineY, fretWidth, isRest = false) {
     const code = ch.toLowerCase();
     const shape = RHYTHM_GLYPHS[code];
@@ -1371,9 +1383,25 @@ document.addEventListener("DOMContentLoaded", async () => {
               continue;
             }
 
-            ctx.fillStyle = stringColors[s];
+            const baseColor = stringColors[s];
+            const lightColor = lightenColor(baseColor, 0.3);
             const noteWidth = Math.max(20, w);
             const noteHeight = 32; // altura fija; solo la anchura sigue la figura temporal
+            const radius = noteHeight / 2;
+
+            ctx.save();
+            ctx.shadowColor = "rgba(0, 0, 0, 0.35)";
+            ctx.shadowBlur = 6;
+
+            const grad = ctx.createLinearGradient(
+              x,
+              y - noteHeight / 2,
+              x,
+              y + noteHeight / 2
+            );
+            grad.addColorStop(0, lightColor);
+            grad.addColorStop(1, baseColor);
+            ctx.fillStyle = grad;
 
             ctx.beginPath();
             ctx.roundRect(
@@ -1381,23 +1409,20 @@ document.addEventListener("DOMContentLoaded", async () => {
               y - noteHeight / 2,
               noteWidth,
               noteHeight,
-              8
+              radius
             );
             ctx.fill();
 
-            ctx.strokeStyle = stringColors[s];
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = "rgba(0, 0, 0, 0.25)";
             ctx.lineWidth = 2;
             ctx.stroke();
 
-            ctx.fillStyle = "#000";
+            ctx.fillStyle = "#fff";
             ctx.font = "bold 16px Arial";
             ctx.textAlign = "center";
             ctx.fillText(fretInfo.value, x, y + 5);
-
-            ctx.shadowColor = stringColors[s];
-            ctx.shadowBlur = 10;
-            ctx.stroke();
-            ctx.shadowBlur = 0;
+            ctx.restore();
             continue;
           }
 
