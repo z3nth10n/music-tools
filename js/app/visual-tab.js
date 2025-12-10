@@ -1321,8 +1321,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             ctx.fillStyle = "#fff";
             ctx.font = "bold 24px Arial";
             ctx.textAlign = "center";
-            ctx.shadowColor = "rgba(0,0,0,0.5)";
-            ctx.shadowBlur = 4;
+            ctx.shadowColor = "rgba(0,0,0,0.65)";
+            ctx.shadowBlur = 6;
             ctx.fillText(chordName, x + w / 2 - 15, blockTop + blockHeight / 2 + 8);
             ctx.shadowBlur = 0;
 
@@ -1421,6 +1421,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             ctx.fillStyle = "#fff";
             ctx.font = "bold 16px Arial";
             ctx.textAlign = "center";
+            ctx.shadowColor = "rgba(0, 0, 0, 0.6)";
+            ctx.shadowBlur = 4;
             ctx.fillText(fretInfo.value, x, y + 5);
             ctx.restore();
             continue;
