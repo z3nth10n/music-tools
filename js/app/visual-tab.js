@@ -719,7 +719,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     r: { type: "rest" },
   };
 
-  function drawRhythmSymbol(ctx, ch, x, baselineY, fretWidth) {
+  function drawRhythmSymbol(ctx, ch, x, baselineY, fretWidth, isRest = false) {
     const code = ch.toLowerCase();
     const shape = RHYTHM_GLYPHS[code];
     if (!shape) return;
@@ -729,21 +729,58 @@ document.addEventListener("DOMContentLoaded", async () => {
     ctx.fillStyle = "#ddd";
     ctx.lineWidth = 2;
 
-    // Silencios
-    if (shape.type === "rest") {
-      // Silencio tipo negra, estilizado
+    // Silencios: si es 'r' o si pasamos isRest=true
+    if (shape.type === "rest" || isRest) {
       const x0 = x;
-      const y0 = baselineY - 18;
-      ctx.beginPath();
-      ctx.moveTo(x0 - 4, y0);
-      ctx.lineTo(x0 + 3, y0 + 6);
-      ctx.lineTo(x0 - 3, y0 + 12);
-      ctx.lineTo(x0 + 4, y0 + 18);
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.arc(x0 + 4, y0 + 21, 2, 0, Math.PI * 2);
-      ctx.fill();
+      // Ajuste vertical según el tipo de silencio
+      
+      if (code === 'w') {
+          // Redonda: rectángulo bajo la línea
+          ctx.fillRect(x0 - 6, baselineY - 10, 12, 6);
+      } else if (code === 'h' || code === 'b') {
+          // Blanca: rectángulo sobre la línea
+          ctx.fillRect(x0 - 6, baselineY - 4, 12, 6);
+      } else if (code === 'c') {
+          // Corchea (tipo 7)
+          const y0 = baselineY;
+          ctx.beginPath();
+          ctx.arc(x0 - 3, y0 - 5, 3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.moveTo(x0 - 1, y0 - 5); 
+          ctx.quadraticCurveTo(x0 + 6, y0, x0 + 3, y0 + 10); 
+          ctx.lineTo(x0 - 2, y0 + 18); 
+          ctx.stroke();
+      } else if (code === 's') {
+          // Semicorchea (doble 7)
+          const y0 = baselineY;
+          ctx.beginPath();
+          ctx.arc(x0 - 3, y0 - 8, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(x0 - 1, y0, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+          
+          ctx.beginPath();
+          ctx.moveTo(x0 - 1, y0 - 8);
+          ctx.quadraticCurveTo(x0 + 5, y0 - 3, x0 + 2, y0 + 7);
+          ctx.moveTo(x0 + 1, y0);
+          ctx.quadraticCurveTo(x0 + 7, y0 + 5, x0 + 4, y0 + 15);
+          ctx.lineTo(x0 - 1, y0 + 20);
+          ctx.stroke();
+      } else {
+          // Negra (o default para 'r'/'n')
+          const y0 = baselineY - 9;
+          ctx.beginPath();
+          ctx.moveTo(x0 - 4, y0);
+          ctx.lineTo(x0 + 3, y0 + 6);
+          ctx.lineTo(x0 - 3, y0 + 12);
+          ctx.lineTo(x0 + 4, y0 + 18);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(x0 + 4, y0 + 21, 2, 0, Math.PI * 2);
+          ctx.fill();
+      }
 
       ctx.restore();
       return;
@@ -1030,12 +1067,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Draw Rhythm / Time Figures (Layer 4 - Bottom)
     iterateBlocks((block, currentX) => {
       const bottomY = TOP_MARGIN + 5 * STRING_SPACING + 40;
+      const middleY = TOP_MARGIN + 2.5 * STRING_SPACING;
 
       if (block.rhythmStems) {
         const line = block.rhythmStems;
         for (let i = 0; i < line.length; i++) {
           const ch = line[i];
           const x = currentX + i * fretWidth;
+
+          // Detectar silencio por 'z' en las cuerdas
+          let isRest = false;
+          if (block.strings) {
+             for(let s=0; s<block.strings.length; s++) {
+                 if (block.strings[s][i] && block.strings[s][i].toLowerCase() === 'z') {
+                     isRest = true;
+                     break;
+                 }
+             }
+          }
+          if (ch.toLowerCase() === 'r') isRest = true;
 
           if (ch === "|") {
             // pequeña barra separadora bajo la tablatura
@@ -1046,8 +1096,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             ctx.lineTo(x, bottomY + 20);
             ctx.stroke();
           } else if (ch !== " ") {
-            // dibujar la figura musical en lugar de la letra
-            drawRhythmSymbol(ctx, ch, x, bottomY, fretWidth);
+            // Si es silencio, lo dibujamos en medio (middleY)
+            // Si es nota, abajo (bottomY)
+            if (isRest) {
+                drawRhythmSymbol(ctx, ch, x, middleY, fretWidth, true);
+            } else {
+                drawRhythmSymbol(ctx, ch, x, bottomY, fretWidth, false);
+            }
           }
         }
       }
