@@ -9,4 +9,5 @@ window.translations_es = {
   select_artist: "Seleccionar Artista",
   unknown_artist: "Artista Desconocido",
   unknown_song: "Canción Desconocida",
+  show_chords: "Mostrar Acordes",
 };

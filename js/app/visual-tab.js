@@ -47,6 +47,27 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Language & Notation Selector Logic
   const langSelect = document.getElementById("langSelect");
   const notationSelect = document.getElementById("notationSelect");
+  const showChordsCheckbox = document.getElementById("showChordsCheckbox");
+
+  // Show Chords Logic
+  let showChords = true;
+  const savedShowChords = localStorage.getItem("portal_showChords");
+  if (savedShowChords !== null) {
+    showChords = savedShowChords === "true";
+  }
+
+  if (showChordsCheckbox) {
+    showChordsCheckbox.checked = showChords;
+    showChordsCheckbox.addEventListener("change", (e) => {
+      showChords = e.target.checked;
+      localStorage.setItem("portal_showChords", showChords);
+      // Re-render if a tab is active
+      if (currentTab && currentTab.content) {
+        const parsedData = parseTabContent(currentTab.content);
+        renderVisualTab(parsedData);
+      }
+    });
+  }
 
   // Detect browser language or saved language
   const browserLang = navigator.language || navigator.userLanguage || "en";
@@ -921,6 +942,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     // 2. Draw Chord Blocks (Layer 2)
+    if (showChords) {
     iterateBlocks((block, currentX) => {
       if (block.chords) {
         const chordLine = block.chords;
@@ -1034,11 +1056,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
       }
     });
+    }
 
     // 3. Draw Notes (Layer 3)
     iterateBlocks((block, currentX) => {
       const chordPositions = new Set();
-      if (block.chords) {
+      if (showChords && block.chords) {
         const chordRegex = /([A-Za-z0-9#]+|\*)/g;
         let match;
         while ((match = chordRegex.exec(block.chords)) !== null) {

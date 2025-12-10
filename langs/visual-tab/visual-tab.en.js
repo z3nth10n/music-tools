@@ -8,5 +8,6 @@ window.translations_en = {
   select_artist: "Select Artist",
   unknown_artist: "Unknown Artist",
   unknown_song: "Unknown Song",
+  show_chords: "Show Chords",
 };
 
