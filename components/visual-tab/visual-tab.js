@@ -36,13 +36,20 @@ function drawErrorOnCanvas(msg) {
   ctx.fillText(msg, 10, 50);
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
+async function renderVisualTab() {
   let currentNotation = "english";
 
   const SONGSTERR_BASE_URL = "https://www.songsterr.com";
   const TABS_API_BASE = getApiLocation();
   const REMOTE_TABS_KEY = "visualTab_remoteTabs";
   const ABSOLUTE_PATH = getAbsolutePath();
+
+  if (window.setTranslationPrefix) {
+    window.setTranslationPrefix(
+      "visual-tab",
+      `${ABSOLUTE_PATH}components/visual-tab/langs`
+    );
+  }
 
   // Language & Notation Selector Logic
   const langSelect = document.getElementById("langSelect");
@@ -1811,4 +1818,20 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   await loadTabs();
-});
+}
+
+function initVisualTab() {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", renderVisualTab, {
+      once: true,
+    });
+  } else {
+    renderVisualTab();
+  }
+}
+
+if (!window.__COMPONENT_ROUTER_ACTIVE) {
+  initVisualTab();
+}
+
+window.renderVisualTab = renderVisualTab;

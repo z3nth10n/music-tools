@@ -82,10 +82,13 @@ function saveCustomTunings() {
   localStorage.setItem(CUSTOM_TUNINGS_KEY, json);
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
+async function renderChordByFret() {
   // Set translation prefix for this page
   if (window.setTranslationPrefix) {
-    window.setTranslationPrefix("chord-by-fret/chord-by-fret");
+    window.setTranslationPrefix(
+      "chord-by-fret",
+      `${ABSOLUTE_PATH}components/chord-by-fret/langs`
+    );
   }
 
   const tuningSelect = document.getElementById("tuningSelect");
@@ -236,7 +239,23 @@ document.addEventListener("DOMContentLoaded", async () => {
   saveTuningButton.addEventListener("click", saveCurrentTuning);
 
   updateStringNotes();
-});
+}
+
+function initChordByFret() {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", renderChordByFret, {
+      once: true,
+    });
+  } else {
+    renderChordByFret();
+  }
+}
+
+if (!window.__COMPONENT_ROUTER_ACTIVE) {
+  initChordByFret();
+}
+
+window.renderChordByFret = renderChordByFret;
 
 function buildStringTuningOptions() {
   const stringTunings = document.querySelectorAll(".string-tuning");

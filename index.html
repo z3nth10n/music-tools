@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="css/index.css">
 </head>
 <body>
-  <div class="portal-container">
+  <div class="portal-container" id="portal-view">
     <div class="lang-selector">
       <select id="langSelect">
         <option value="en">English</option>
@@ -37,7 +37,7 @@
     <p class="main-subtitle" data-i18n="portal_subtitle">Essential utilities for every guitarist</p>
 
     <div class="tools-grid">
-      <a href="components/chord-by-fret.html" class="tool-card">
+      <a href="?view=chord-by-fret" class="tool-card" data-route="chord-by-fret">
         <div class="tool-icon">🎸</div>
         <h2 class="tool-title" data-i18n="tool_chord_by_fret_title">Chord Detector</h2>
         <p class="tool-description" data-i18n="tool_chord_by_fret_desc">
@@ -45,7 +45,7 @@
         </p>
       </a>
 
-      <a href="components/chord-analysis.html" class="tool-card">
+      <a href="?view=chord-analysis" class="tool-card" data-route="chord-analysis">
         <div class="tool-icon">🎤</div>
         <h2 class="tool-title" data-i18n="tool_audio_title">Audio Analyzer</h2>
         <p class="tool-description" data-i18n="tool_audio_desc">
@@ -53,7 +53,7 @@
         </p>
       </a>
 
-      <a href="components/chord-library.html" class="tool-card">
+      <a href="?view=chord-library" class="tool-card" data-route="chord-library">
         <div class="tool-icon">📖</div>
         <h2 class="tool-title" data-i18n="tool_library_title">Chord Library</h2>
         <p class="tool-description" data-i18n="tool_library_desc">
@@ -61,7 +61,7 @@
         </p>
       </a>
 
-      <a href="components/visual-tab.html" class="tool-card">
+      <a href="?view=visual-tab" class="tool-card" data-route="visual-tab">
         <div class="tool-icon">🎼</div>
         <h2 class="tool-title" data-i18n="tool_visual_tab_title">Visual Tab Player</h2>
         <p class="tool-description" data-i18n="tool_visual_tab_desc">
@@ -87,9 +87,12 @@
     </footer>
   </div>
 
+  <div id="component-view" class="view-hidden"></div>
+
   <script src="js/consts.js"></script>
   <script src="js/shared/langs.js"></script>
   <script src="js/shared/theme.js"></script>
   <script src="js/app/index.js"></script>
+  <script src="js/app/router.js"></script>
 </body>
 </html>

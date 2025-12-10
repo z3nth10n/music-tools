@@ -852,7 +852,7 @@ toggleButton.addEventListener("click", () => {
 });
 
 // ===================== Initialization =====================
-document.addEventListener("DOMContentLoaded", () => {
+function renderChordAnalysis() {
   // Initialize Advanced Settings & Logs
   initAdvancedSettingsAndLogsUI();
 
@@ -884,7 +884,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Set translation prefix for this page
   if (window.setTranslationPrefix) {
-    window.setTranslationPrefix("chord-analysis/chord-analysis");
+    window.setTranslationPrefix(
+      "chord-analysis",
+      `${ABSOLUTE_PATH}components/chord-analysis/langs`
+    );
   }
 
   const notationSelect = document.getElementById("notationSelect");
@@ -965,4 +968,20 @@ document.addEventListener("DOMContentLoaded", () => {
       updateUIForSilence();
     });
   }
-});
+}
+
+function initChordAnalysis() {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", renderChordAnalysis, {
+      once: true,
+    });
+  } else {
+    renderChordAnalysis();
+  }
+}
+
+if (!window.__COMPONENT_ROUTER_ACTIVE) {
+  initChordAnalysis();
+}
+
+window.renderChordAnalysis = renderChordAnalysis;

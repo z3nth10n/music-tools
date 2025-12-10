@@ -2,80 +2,121 @@ window.currentLang = "en";
 window.translations = {};
 
 const ABSOLUTE_PATH = getAbsolutePath();
+const DEFAULT_TRANSLATION_BASE = `${ABSOLUTE_PATH}langs`;
 
-function detectTranslationPrefix() {
-  const path = `${ABSOLUTE_PATH}/langs`;
-  if (path.indexOf("chord-analysis.html") !== -1) {
-    return "chord-analysis/chord-analysis";
-  } else if (path.indexOf("chord-by-fret.html") !== -1) {
-    return "chord-by-fret/chord-by-fret";
-  } else if (path.indexOf("chord-library.html") !== -1) {
-    return "chord-library/chord-library";
-  } else if (path.indexOf("visual-tab.html") !== -1) {
-    return "visual-tab/visual-tab";
-  }
-  return "index";
+function normalizeBasePath(path) {
+  if (!path) return DEFAULT_TRANSLATION_BASE;
+  return path.endsWith("/") ? path.slice(0, -1) : path;
 }
 
-window.translationPrefix = detectTranslationPrefix();
+function detectTranslationConfig() {
+  const path = window.location.pathname;
+  const params = new URLSearchParams(window.location.search);
+  const viewParam = params.get("view");
+
+  if (path.includes("chord-analysis") || viewParam === "chord-analysis") {
+    return {
+      prefix: "chord-analysis",
+      basePath: `${ABSOLUTE_PATH}components/chord-analysis/langs`,
+    };
+  }
+
+  if (path.includes("chord-by-fret") || viewParam === "chord-by-fret") {
+    return {
+      prefix: "chord-by-fret",
+      basePath: `${ABSOLUTE_PATH}components/chord-by-fret/langs`,
+    };
+  }
+
+  if (path.includes("chord-library") || viewParam === "chord-library") {
+    return {
+      prefix: "chord-library",
+      basePath: `${ABSOLUTE_PATH}components/chord-library/langs`,
+    };
+  }
+
+  if (path.includes("visual-tab") || viewParam === "visual-tab") {
+    return {
+      prefix: "visual-tab",
+      basePath: `${ABSOLUTE_PATH}components/visual-tab/langs`,
+    };
+  }
+
+  return { prefix: "index", basePath: DEFAULT_TRANSLATION_BASE };
+}
+
+window.translationConfig = detectTranslationConfig();
+window.translationPrefix = window.translationConfig.prefix;
 console.log("Auto-detected translation prefix:", window.translationPrefix);
 
-window.setTranslationPrefix = function (prefix) {
-  window.translationPrefix = prefix;
+window.setTranslationPrefix = function (prefix, basePath) {
+  window.translationConfig = {
+    prefix: prefix || "index",
+    basePath: normalizeBasePath(basePath),
+  };
+  window.translationPrefix = window.translationConfig.prefix;
 };
 
 window.loadTranslations = function (lang, onLanguageLoaded) {
   console.log("Loading translations for:", lang);
 
-  // Remove any existing translation script to avoid duplicates/conflicts
-  const oldScript = document.getElementById("lang-script");
-  if (oldScript) {
-    oldScript.remove();
-  }
+  return new Promise((resolve) => {
+    // Remove any existing translation script to avoid duplicates/conflicts
+    const oldScript = document.getElementById("lang-script");
+    if (oldScript) {
+      oldScript.remove();
+    }
 
-  const script = document.createElement("script");
-  script.id = "lang-script";
-  script.src =
-    ABSOLUTE_PATH +
-    "/langs/" +
-    window.translationPrefix +
-    "." +
-    lang +
-    ".js?v=" +
-    new Date().getTime();
+    const { prefix, basePath } = window.translationConfig || {};
+    const finalPrefix = prefix || "index";
+    const base = normalizeBasePath(basePath);
 
-  script.onload = function () {
-    // The script should have set window.translations_en or window.translations_es
-    const loadedTranslations = window["translations_" + lang];
+    const script = document.createElement("script");
+    script.id = "lang-script";
+    script.src = `${base}/${finalPrefix}.${lang}.js?v=${new Date().getTime()}`;
 
-    if (loadedTranslations) {
-      window.translations = loadedTranslations;
-      window.currentLang = lang;
-      console.log(
-        "Translations loaded:",
-        Object.keys(window.translations).length,
-        "keys"
-      );
-      applyTranslations();
-      if (onLanguageLoaded) onLanguageLoaded();
-    } else {
-      console.error("Translations object not found for", lang);
+    script.onload = function () {
+      // The script should have set window.translations_en or window.translations_es
+      const loadedTranslations = window["translations_" + lang];
+
+      if (loadedTranslations) {
+        window.translations = loadedTranslations;
+        window.currentLang = lang;
+        console.log(
+          "Translations loaded:",
+          Object.keys(window.translations).length,
+          "keys"
+        );
+        applyTranslations();
+        if (onLanguageLoaded) onLanguageLoaded();
+        resolve();
+      } else {
+        console.error("Translations object not found for", lang);
+        if (lang !== "en") {
+          console.log("Falling back to English");
+          window
+            .loadTranslations("en", onLanguageLoaded)
+            .finally(() => resolve());
+        } else {
+          resolve();
+        }
+      }
+    };
+
+    script.onerror = function () {
+      console.error("Error loading translation script for", lang);
       if (lang !== "en") {
         console.log("Falling back to English");
-        window.loadTranslations("en", onLanguageLoaded);
+        window
+          .loadTranslations("en", onLanguageLoaded)
+          .finally(() => resolve());
+      } else {
+        resolve();
       }
-    }
-  };
+    };
 
-  script.onerror = function () {
-    console.error("Error loading translation script for", lang);
-    if (lang !== "en") {
-      console.log("Falling back to English");
-      window.loadTranslations("en", onLanguageLoaded);
-    }
-  };
-
-  document.body.appendChild(script);
+    document.body.appendChild(script);
+  });
 };
 
 function applyTranslations() {

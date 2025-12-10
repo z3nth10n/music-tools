@@ -724,13 +724,16 @@ const AVAILABLE_SAMPLES = {
 };
 
 // --- Initialization ---
-document.addEventListener("DOMContentLoaded", async () => {
+async function renderChordLibrary() {
   // Preload samples
   loadGuitarSamples();
 
   // Set translation prefix
   if (window.setTranslationPrefix) {
-    window.setTranslationPrefix("chord-library/chord-library");
+    window.setTranslationPrefix(
+      "chord-library",
+      `${ABSOLUTE_PATH}components/chord-library/langs`
+    );
   }
 
   // Detect browser language
@@ -821,7 +824,23 @@ document.addEventListener("DOMContentLoaded", async () => {
       await loadGuitarSamples();
     });
   }
-});
+}
+
+function initChordLibrary() {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", renderChordLibrary, {
+      once: true,
+    });
+  } else {
+    renderChordLibrary();
+  }
+}
+
+if (!window.__COMPONENT_ROUTER_ACTIVE) {
+  initChordLibrary();
+}
+
+window.renderChordLibrary = renderChordLibrary;
 
 function init() {
   renderRootPicker();
