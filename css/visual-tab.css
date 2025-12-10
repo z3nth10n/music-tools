@@ -103,24 +103,26 @@
 .canvas-wrapper {
   position: relative;
   display: flex;
-  flex-direction: row;
-  gap: 24px;
+  flex-direction: row;   /* fila horizontal */
+  flex-wrap: nowrap;     /* que NO salten a otra línea */
+  gap: 0;                /* sin huecos entre canvases */
   overflow-x: auto;
+  overflow-y: hidden;    /* que no haya scroll vertical interno */
   padding: 16px 0;
   width: 100%;
-  background: #111; /* Fretboard dark background */
+  background: #111;      /* fondo común de todo el “fretboard” */
   border-radius: 12px;
   border: 4px solid #333;
   box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
-  /* Custom scrollbar */
   scrollbar-width: thin;
   scrollbar-color: var(--accent) var(--bg-alt);
 }
 
 .canvas-wrapper canvas {
-  flex-shrink: 0;
-  background: #111; /* para que no se vea transparente */
-  border-radius: 12px;
+  display: block;
+  flex: 0 0 auto;        /* tamaño fijo, no se estira ni encoge */
+  background: transparent; /* el fondo lo pone el wrapper */
+  border-radius: 0;        /* sin esquinas redondas para que empalmen bien */
 }
 
 .canvas-wrapper::-webkit-scrollbar {

@@ -118,6 +118,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Para poder saber qué chunks tenemos
   let currentChunks = []; // array de { canvas, blocks }
+  let chunkObserver = null;
 
   const accordionContainer = document.getElementById("accordion-container");
   const searchInput = document.getElementById("songsterr-search");
@@ -1121,16 +1122,45 @@ document.addEventListener("DOMContentLoaded", async () => {
       chunkCanvas.classList.add("tab-canvas-chunk");
       canvasWrapper.appendChild(chunkCanvas);
 
-      currentChunks.push({ canvas: chunkCanvas, blocks: chunkBlocks });
+      currentChunks.push({
+        canvas: chunkCanvas,
+        blocks: chunkBlocks,
+        rendered: false,
+      });
     });
 
-    // De momento renderizamos todos los chunks de golpe.
-    // Más adelante se puede meter un IntersectionObserver para lazy-load.
-    currentChunks.forEach(({ canvas: chunkCanvas, blocks: chunkBlocks }, idx) => {
-      canvas = chunkCanvas;
-      ctx = canvas.getContext("2d");
-      console.log("Rendering chunk", idx, "into canvas", chunkCanvas);
-      renderChunk(chunkBlocks);
+    // Si ya había un observer anterior, lo desconectamos
+    if (chunkObserver) {
+      chunkObserver.disconnect();
+    }
+
+    // Observer para ir pintando según se van viendo los canvases
+    chunkObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const idx = Number(entry.target.dataset.chunkIndex);
+          const info = currentChunks[idx];
+          if (!info) return;
+
+          if (entry.isIntersecting && !info.rendered) {
+            canvas = info.canvas;
+            ctx = info.canvas.getContext("2d");
+            console.log("Rendering chunk", idx, "into canvas", info.canvas);
+            renderChunk(info.blocks);
+            info.rendered = true;
+          }
+        });
+      },
+      {
+        root: canvasWrapper, // el scroll es el wrapper
+        threshold: 0.1, // se dispara cuando al menos el 10% del canvas se ve
+      }
+    );
+
+    // Registrar cada canvas en el observer
+    currentChunks.forEach((info, idx) => {
+      info.canvas.dataset.chunkIndex = idx;
+      chunkObserver.observe(info.canvas);
     });
   }
 
