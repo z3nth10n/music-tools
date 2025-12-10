@@ -34,7 +34,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   let currentNotation = "english";
 
   const SONGSTERR_BASE_URL = "https://www.songsterr.com";
-  const TABS_API_BASE = "https://tabs.z3nth10n.net";
+  const TABS_API_BASE = getApiLocation();
   const REMOTE_TABS_KEY = "visualTab_remoteTabs";
   const ABSOLUTE_PATH = getAbsolutePath();
 
