@@ -1042,12 +1042,12 @@ async function renderVisualTab() {
           w = BASE_FRET_WIDTH; // silencios: ancho base fijo
         } else if (rhythmChar && rhythmChar !== "|") {
           if (rhythmChar.trim() === "") {
-            w = COMPACT_FRET_WIDTH; // sin figura: espaciado mínimo
+            w = COMPACT_FRET_WIDTH; // sin figura: espaciado mínimo (0)
           } else {
             w = BASE_FRET_WIDTH * getRhythmWidthMultiplier(rhythmChar);
           }
         } else {
-          // Si es compacta usamos ancho pequeño, si no el base
+          // Si es compacta usamos ancho pequeño (0), si no el base
           // (Las barras '|' quedan con ancho base para separar)
           w = isColumnCompact[i] ? COMPACT_FRET_WIDTH : BASE_FRET_WIDTH;
         }
